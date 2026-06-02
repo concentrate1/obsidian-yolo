@@ -22,7 +22,7 @@
 
 在编辑器光标处录音，把音频交给 ASR，再让 LLM 结合附近上下文打磨成可直接落笔的文本。结果先以灰字预览，按 Tab 接受，按 Esc 取消。
 
-可选能力包括点按 / 长按录音、接受后继续听写、VAD 自动切段、麦克风分贝计、提示词风格预设、自定义提示词，以及文档摘要 + 热词辅助纠错。打磨结果不会直接写入正文，确认前只显示为灰字草稿。
+其它功能包括：点按 / 长按录音、接受后继续听写、VAD 自动切段、麦克风分贝计、提示词风格预设、自定义提示词，以及文档摘要 + 热词辅助纠错。打磨结果不会直接写入正文，确认前只显示为灰字草稿。
 
 浮岛样式：  
 <img src="./docs/assets/voice/voice-input.gif" width="600">
@@ -93,13 +93,13 @@
 
 ## 技术说明
 
-面向维护者的架构、关键取舍和发布分支边界见 [语音版实现说明](./docs/technical/voice-implementation.md)。
+面向维护者和开发者的技术分析见： [语音版实现说明](./docs/technical/voice-implementation.md)
 
 ## 分支说明
 
-- 本 fork 中的 `main` 应保持为上游镜像分支。
-- `yolo-unofficial-dev` 用来集中查看和试用这套语音版改动。
-- 用于上游合并的功能 [PR](https://github.com/Lapis0x0/obsidian-yolo/pull/362) 仍然是 `context-voice-input`，不是 `yolo-unofficial-dev`。
+- 本 fork 中的 `main` 为上游镜像分支。
+- `yolo-unofficial-dev` 专门用来展示和发布这套语音版改动。
+- 用于上游合并 [PR](https://github.com/Lapis0x0/obsidian-yolo/pull/362) 的分支仍然是 `context-voice-input`。
 
 ## 原项目
 
