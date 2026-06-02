@@ -1,7 +1,11 @@
 import { requestUrl } from 'obsidian'
 
-const GITHUB_RELEASE_URL =
-  'https://api.github.com/repos/Lapis0x0/obsidian-yolo/releases/latest'
+export const VOICE_CHANNEL_MANIFEST_URL =
+  'https://raw.githubusercontent.com/concentrate1/obsidian-yolo/yolo-unofficial-dev/manifest.json'
+const VOICE_RELEASE_BY_TAG_API_BASE =
+  'https://api.github.com/repos/concentrate1/obsidian-yolo/releases/tags'
+const VOICE_RELEASE_TAG_PAGE_BASE =
+  'https://github.com/concentrate1/obsidian-yolo/releases/tag'
 
 export type ReleaseNotesByLanguage = {
   en: string | null
@@ -19,6 +23,18 @@ type GitHubReleaseResponse = {
   tag_name?: string
   body?: string
   html_url?: string
+}
+
+type VoiceManifestResponse = {
+  version?: string
+}
+
+function buildVoiceReleaseApiUrl(version: string): string {
+  return `${VOICE_RELEASE_BY_TAG_API_BASE}/${encodeURIComponent(version)}`
+}
+
+function buildVoiceReleasePageUrl(version: string): string {
+  return `${VOICE_RELEASE_TAG_PAGE_BASE}/${encodeURIComponent(version)}`
 }
 
 function stripVersionPrefix(tag: string): string {
@@ -210,38 +226,71 @@ export function parseChangelog(markdown: string): ParsedChangelog {
 }
 
 /**
- * Fetches latest GitHub release and compares to `currentVersion`.
+ * Fetches the yolo-unofficial-dev channel manifest and compares to
+ * `currentVersion`. Voice builds deliberately do not follow upstream's latest
+ * release endpoint: the branch manifest is the baked update channel, then the
+ * matching fork release tag provides changelog details.
  * Returns null on network/parse failure (caller should stay silent).
  */
 export async function checkForUpdate(
   currentVersion: string,
 ): Promise<UpdateCheckResult | null> {
   try {
-    const response = await requestUrl({
-      url: GITHUB_RELEASE_URL,
+    const manifestResponse = await requestUrl({
+      url: VOICE_CHANNEL_MANIFEST_URL,
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+    })
+
+    if (manifestResponse.status < 200 || manifestResponse.status >= 300) {
+      return null
+    }
+
+    const manifest = JSON.parse(manifestResponse.text) as VoiceManifestResponse
+    const latestVersion =
+      typeof manifest.version === 'string'
+        ? stripVersionPrefix(manifest.version)
+        : ''
+    if (!latestVersion) {
+      return null
+    }
+
+    const hasUpdate = compareVersions(currentVersion, latestVersion)
+    if (!hasUpdate) {
+      return {
+        hasUpdate,
+        latestVersion,
+        releaseNotes: { en: null, zh: null },
+        releaseUrl: buildVoiceReleasePageUrl(latestVersion),
+      }
+    }
+
+    const releaseResponse = await requestUrl({
+      url: buildVoiceReleaseApiUrl(latestVersion),
       method: 'GET',
       headers: {
         Accept: 'application/vnd.github+json',
       },
     })
 
-    if (response.status < 200 || response.status >= 300) {
+    if (releaseResponse.status < 200 || releaseResponse.status >= 300) {
       return null
     }
 
-    const data = JSON.parse(response.text) as GitHubReleaseResponse
-    const tag = typeof data.tag_name === 'string' ? data.tag_name : ''
-    const latestVersion = stripVersionPrefix(tag)
-    if (!latestVersion) {
-      return null
-    }
-
-    const hasUpdate = compareVersions(currentVersion, latestVersion)
+    const data = JSON.parse(releaseResponse.text) as GitHubReleaseResponse
+    const releaseTag = typeof data.tag_name === 'string' ? data.tag_name : ''
+    const releaseVersion = stripVersionPrefix(releaseTag)
+    if (releaseVersion && releaseVersion !== latestVersion) return null
     const releaseNotes =
       typeof data.body === 'string'
         ? splitReleaseNotesByLanguage(data.body)
         : { en: null, zh: null }
-    const releaseUrl = typeof data.html_url === 'string' ? data.html_url : ''
+    const releaseUrl =
+      typeof data.html_url === 'string'
+        ? data.html_url
+        : buildVoiceReleasePageUrl(latestVersion)
 
     return {
       hasUpdate,

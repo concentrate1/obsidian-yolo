@@ -24,13 +24,13 @@
 
 可选能力包括点按 / 长按录音、接受后继续听写、VAD 自动切段、麦克风分贝计、提示词风格预设、自定义提示词，以及文档摘要 + 热词辅助纠错。打磨结果不会直接写入正文，确认前只显示为灰字草稿。
 
-浮岛样式：  
-<img src="./docs/assets/voice/voice-input.gif" width="600">
+浮岛样式：
+<img src="./docs/assets/voice/voice-input.gif" width="400">
 
-支持边说边改（x2播放）：  
+支持边说边改（x2播放）：
 <img src="./docs/assets/voice/voice-input-and-change.gif" width="600">
 
-修改提示词后可以直接翻译（x2播放）：  
+修改提示词后可以直接翻译（x2播放）：
 <img src="./docs/assets/voice/voice-input-and-translate.gif" width="600">
 
 ### 音频文件转写
@@ -39,8 +39,8 @@
 
 文件转写会先检查文件和当前 ASR 能力，再确认直传、切段、长音频上传或 WebSocket 流式方案。HTTP 短音频支持本地切段、并发、错峰和边界重叠；长音频和 WebSocket 路线可保留提供商返回的说话人、分段和时间戳信息。
 
-浮岛样式：  
-<img src="./docs/assets/voice/audio-file-transcription.gif" width="600">
+浮岛样式：
+<img src="./docs/assets/voice/audio-file-transcription.gif" width="800">
 
 
 ### 语音朗读
@@ -49,25 +49,26 @@
 
 朗读支持选区 / 笔记正文、长文本分段、后续分段预生成、内存缓存、自动保存生成音频、拖出音频文件和可选输出设备。Markdown 可按“可读文本”或原始 Markdown 朗读。
 
-浮岛样式：  
-<img src="./docs/assets/voice/read-aloud.gif" width="600">
+浮岛样式：
+<img src="./docs/assets/voice/read-aloud.gif" width="800">
 
 ### 配置与入口
 
-**模型 → 语音识别 (ASR)**：添加 HTTP 短音频、HTTP 长音频、WebSocket 三类 ASR 端点，并可用短录音测试配置。  
+**模型 → 语音识别 (ASR)**：添加 HTTP 短音频、HTTP 长音频、WebSocket 三类 ASR 端点，并可用短录音测试配置。
 <img src="./docs/assets/voice/config-ASR.png" width="600">
 
-**模型 → 语音生成（TTS）**：添加 OpenAI-compatible speech、MiMo chat-audio TTS、百炼 CosyVoice 等 TTS 端点。  
+**模型 → 语音生成（TTS）**：添加 OpenAI-compatible speech、MiMo chat-audio TTS、百炼 CosyVoice 等 TTS 端点。
 <img src="./docs/assets/voice/config-TTS.png" width="600">
 
 **语音 → 语音浮岛**：控制浮岛显示、模式排序和可见性。
-<img src="./docs/assets/voice/config-floating-island.png" width="600">  
+<img src="./docs/assets/voice/config-floating-island.png" width="600">
 
-**语音 → 上下文感知语音输入 / 音频文件转写 / 朗读**：分别选择当前工作流使用的 ASR 或 TTS 端点，并配置各自的高级选项。  
-<img src="./docs/assets/voice/config-context-voice-input.png" width="600">  
-<img src="./docs/assets/voice/config-audio-file-transcription.png" width="600">  
-<img src="./docs/assets/voice/config-read-aloud.png" width="600">  
-  
+**语音 → 上下文感知语音输入 / 音频文件转写 / 朗读**：分别选择当前工作流使用的 ASR 或 TTS 端点，并配置各自的高级选项。
+
+<img src="./docs/assets/voice/config-context-voice-input.png" width="600">
+<img src="./docs/assets/voice/config-audio-file-transcription.png" width="600">
+<img src="./docs/assets/voice/config-read-aloud.png" width="600">
+
 ## 手动安装
 
 1. 打开本语音版发布页：<https://github.com/concentrate1/obsidian-yolo/releases>

@@ -27,17 +27,30 @@ jobs:
           npm run styles:build
           npm run build
 
+      - name: Validate release notes
+        run: |
+          notes_file=".github/release-notes/voice-build.md"
+          if grep -E "PR_NUMBER|TODO|TBD|PLACEHOLDER" "$notes_file"; then
+            echo "语音版 Release 说明仍包含未完成占位符。" >&2
+            exit 1
+          fi
+
       - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tag="${GITHUB_REF#refs/tags/}"
+          notes_file=".github/release-notes/voice-build.md"
           if gh release view "$tag" >/dev/null 2>&1; then
+            gh release edit "$tag" \
+              --title="$tag" \
+              --notes-file "$notes_file"
             gh release upload "$tag" \
               main.js manifest.json styles.css \
               --clobber
           else
             gh release create "$tag" \
               --title="$tag" \
+              --notes-file "$notes_file" \
               main.js manifest.json styles.css
           fi

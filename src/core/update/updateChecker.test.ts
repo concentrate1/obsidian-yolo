@@ -1,8 +1,18 @@
+jest.mock('obsidian', () => ({
+  requestUrl: jest.fn(),
+}))
+
+import { requestUrl } from 'obsidian'
+
 import {
+  VOICE_CHANNEL_MANIFEST_URL,
+  checkForUpdate,
   compareVersions,
   parseChangelog,
   splitReleaseNotesByLanguage,
 } from './updateChecker'
+
+const mockedRequestUrl = requestUrl as jest.MockedFunction<typeof requestUrl>
 
 describe('compareVersions', () => {
   it('returns true when latest is newer (patch)', () => {
@@ -23,6 +33,78 @@ describe('compareVersions', () => {
 
   it('strips v prefix on tags', () => {
     expect(compareVersions('1.0.0', 'v1.0.1')).toBe(true)
+  })
+})
+
+describe('checkForUpdate', () => {
+  beforeEach(() => {
+    mockedRequestUrl.mockReset()
+  })
+
+  it('reads the voice branch manifest before fetching the matching release tag', async () => {
+    mockedRequestUrl
+      .mockResolvedValueOnce({
+        status: 200,
+        text: JSON.stringify({ version: '1.5.10.2-voice' }),
+      } as Awaited<ReturnType<typeof requestUrl>>)
+      .mockResolvedValueOnce({
+        status: 200,
+        text: JSON.stringify({
+          tag_name: '1.5.10.2-voice',
+          body: '## 1.5.10.2 Voice build\n- **Voice channel**: update notes',
+          html_url:
+            'https://github.com/concentrate1/obsidian-yolo/releases/tag/1.5.10.2-voice',
+        }),
+      } as Awaited<ReturnType<typeof requestUrl>>)
+
+    const result = await checkForUpdate('1.5.10.1-voice')
+
+    expect(mockedRequestUrl).toHaveBeenCalledTimes(2)
+    expect(mockedRequestUrl.mock.calls[0][0]).toMatchObject({
+      url: VOICE_CHANNEL_MANIFEST_URL,
+    })
+    expect(mockedRequestUrl.mock.calls[1][0]).toMatchObject({
+      url: 'https://api.github.com/repos/concentrate1/obsidian-yolo/releases/tags/1.5.10.2-voice',
+    })
+    expect(result).toMatchObject({
+      hasUpdate: true,
+      latestVersion: '1.5.10.2-voice',
+      releaseUrl:
+        'https://github.com/concentrate1/obsidian-yolo/releases/tag/1.5.10.2-voice',
+    })
+    expect(result?.releaseNotes.en).toContain('Voice channel')
+  })
+
+  it('does not fetch release details when the branch manifest is not newer', async () => {
+    mockedRequestUrl.mockResolvedValueOnce({
+      status: 200,
+      text: JSON.stringify({ version: '1.5.10.1-voice' }),
+    } as Awaited<ReturnType<typeof requestUrl>>)
+
+    const result = await checkForUpdate('1.5.10.1-voice')
+
+    expect(mockedRequestUrl).toHaveBeenCalledTimes(1)
+    expect(result).toEqual({
+      hasUpdate: false,
+      latestVersion: '1.5.10.1-voice',
+      releaseNotes: { en: null, zh: null },
+      releaseUrl:
+        'https://github.com/concentrate1/obsidian-yolo/releases/tag/1.5.10.1-voice',
+    })
+  })
+
+  it('stays silent when the matching voice release is not available', async () => {
+    mockedRequestUrl
+      .mockResolvedValueOnce({
+        status: 200,
+        text: JSON.stringify({ version: '1.5.10.2-voice' }),
+      } as Awaited<ReturnType<typeof requestUrl>>)
+      .mockResolvedValueOnce({
+        status: 404,
+        text: '{}',
+      } as Awaited<ReturnType<typeof requestUrl>>)
+
+    await expect(checkForUpdate('1.5.10.1-voice')).resolves.toBeNull()
   })
 })
 
