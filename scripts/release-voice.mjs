@@ -1,12 +1,11 @@
-import { existsSync, readFileSync, writeFileSync } from 'fs'
+import { existsSync, readFileSync } from 'fs'
 import { dirname, resolve } from 'path'
 import { fileURLToPath } from 'url'
 import { spawnSync } from 'child_process'
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const releaseBranch = 'yolo-unofficial-dev'
-const readmeSource = 'doc/readme.md'
-const readmeTarget = 'README.md'
+const readmePath = 'README.md'
 const releaseNotesPath = '.github/release-notes/voice-build.md'
 const versionFiles = ['manifest.json', 'versions.json', 'package.json']
 const voiceManifestUrl =
@@ -38,15 +37,10 @@ function parseArgs(argv) {
   let syncFrom = ''
   let push = true
   let checkOnly = false
-  let syncReadmeOnly = false
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i]
     if (arg === '--check-only') {
       checkOnly = true
-      continue
-    }
-    if (arg === '--sync-readme-only') {
-      syncReadmeOnly = true
       continue
     }
     if (arg === '--no-push') {
@@ -64,7 +58,7 @@ function parseArgs(argv) {
     }
     fail(`Unexpected argument: ${arg}`)
   }
-  if (!version && !checkOnly && !syncReadmeOnly) {
+  if (!version && !checkOnly) {
     fail(
       'Usage: npm run release:voice -- [--sync-from context-voice-input] [--no-push] <version>',
     )
@@ -77,15 +71,10 @@ function parseArgs(argv) {
       '--check-only cannot be combined with version, --sync-from, or --no-push',
     )
   }
-  if (syncReadmeOnly && (version || syncFrom || !push || checkOnly)) {
-    fail(
-      '--sync-readme-only cannot be combined with version, --sync-from, --no-push, or --check-only',
-    )
-  }
   if (syncFrom && syncFrom.startsWith('-')) {
     fail('--sync-from requires a branch name')
   }
-  return { version, syncFrom, push, checkOnly, syncReadmeOnly }
+  return { version, syncFrom, push, checkOnly }
 }
 
 function assertCleanWorktree() {
@@ -151,14 +140,16 @@ function assertReadmeHasRequiredSections(content) {
   ]
   for (const [label, pattern] of checks) {
     if (!pattern.test(content)) {
-      fail(`${readmeSource} is missing required README coverage: ${label}`)
+      fail(`${readmePath} is missing required README coverage: ${label}`)
     }
   }
 }
 
 function assertRelativeLinksExist(markdownPath, content) {
-  const links = content.matchAll(/!?\[[^\]]*\]\(([^)]+)\)/g)
-  for (const match of links) {
+  const markdownLinks = content.matchAll(/!?\[[^\]]*\]\(([^)]+)\)/g)
+  const htmlLinks = content.matchAll(/\b(?:src|href)=["']([^"']+)["']/gi)
+  const matches = [...markdownLinks, ...htmlLinks]
+  for (const match of matches) {
     const rawTarget = match[1].trim().replace(/^<|>$/g, '')
     if (
       !rawTarget ||
@@ -169,8 +160,6 @@ function assertRelativeLinksExist(markdownPath, content) {
     }
     const target = rawTarget.split('#')[0]
     if (!target) continue
-    // doc/readme.md is a staging copy of the root README; validate links as
-    // they will resolve after copying to README.md.
     const absoluteTarget = resolve(repoRoot, target)
     if (!existsSync(absoluteTarget)) {
       fail(`${markdownPath} references a missing relative target: ${rawTarget}`)
@@ -188,23 +177,11 @@ function assertVoiceUpdateChannel() {
   }
 }
 
-function syncReadme() {
-  const source = readRelative(readmeSource)
-  assertNoPlaceholders(readmeSource, source)
-  assertReadmeHasRequiredSections(source)
-  assertRelativeLinksExist(readmeSource, source)
-  writeFileSync(resolve(repoRoot, readmeTarget), source)
-}
-
-function assertReadmeIsSynced() {
-  const source = readRelative(readmeSource)
-  const target = readRelative(readmeTarget)
-  assertNoPlaceholders(readmeSource, source)
-  assertReadmeHasRequiredSections(source)
-  assertRelativeLinksExist(readmeSource, source)
-  if (source !== target) {
-    fail(`${readmeTarget} is not synced from ${readmeSource}`)
-  }
+function assertReadme() {
+  const readme = readRelative(readmePath)
+  assertNoPlaceholders(readmePath, readme)
+  assertReadmeHasRequiredSections(readme)
+  assertRelativeLinksExist(readmePath, readme)
 }
 
 function assertReleaseNotes() {
@@ -213,22 +190,14 @@ function assertReleaseNotes() {
   assertRelativeLinksExist(releaseNotesPath, notes)
 }
 
-const { version, syncFrom, push, checkOnly, syncReadmeOnly } = parseArgs(
-  process.argv.slice(2),
-)
+const { version, syncFrom, push, checkOnly } = parseArgs(process.argv.slice(2))
 
 assertCurrentBranch()
 assertVoiceUpdateChannel()
 assertReleaseNotes()
 
-if (syncReadmeOnly) {
-  syncReadme()
-  console.log(`[release:voice] Synced ${readmeTarget} from ${readmeSource}.`)
-  process.exit(0)
-}
-
 if (checkOnly) {
-  assertReadmeIsSynced()
+  assertReadme()
   console.log('[release:voice] Check passed.')
   process.exit(0)
 }
@@ -241,10 +210,10 @@ if (syncFrom) {
   assertCleanWorktree()
 }
 
-syncReadme()
+assertReadme()
 run('npm', ['run', 'version', '--', version])
 
-run('git', ['add', readmeTarget, ...versionFiles])
+run('git', ['add', ...versionFiles])
 run('git', [
   'commit',
   '-m',

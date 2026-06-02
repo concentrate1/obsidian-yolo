@@ -11,7 +11,7 @@
 > [!WARNING]
 > 这是非官方语音版 `concentrate1/obsidian-yolo@yolo-unofficial-dev` ，不是上游 `Lapis0x0/obsidian-yolo` 的官方发布。
 >
-> 本构建是个人维护的实验性版本,仍处于测试状态，不建议用于重要 vault。请优先在测试 vault 或可随时恢复的 vault 中试用。
+> 本构建是个人维护的实验性版本，仍处于测试状态，不建议用于重要 vault。请优先在测试 vault 或可随时恢复的 vault 中试用。
 
 > [!IMPORTANT]
 > 这是 YOLO 的变体。同一个 vault 中只能在上游 YOLO 和本语音版之间二选一，不要同时安装或启用。两者并存可能导致插件文件、设置和更新通道互相覆盖。从上游 YOLO 切换到本语音版，应视为替换插件。
@@ -57,7 +57,7 @@
 **模型 → 语音识别 (ASR)**：添加 HTTP 短音频、HTTP 长音频、WebSocket 三类 ASR 端点，并可用短录音测试配置。  
 <img src="./docs/assets/voice/config-ASR.png" width="600">
 
-**模型 → 语音生成（TTS）**：添加 OpenAI-compatible speech、MiMo chat-audio TTS、百炼 CosyVoice 等 TTS 端点。  
+**模型 → 语音生成（TTS）**：添加各类 TTS 端点，也可播放测试。
 <img src="./docs/assets/voice/config-TTS.png" width="600">
 
 **语音 → 语音浮岛**：控制浮岛显示、模式排序和可见性。
@@ -70,23 +70,26 @@
   
 ## 手动安装
 
+在 Obsidian 中打开“设置 -> 第三方插件”。
+
 1. 打开本语音版发布页：<https://github.com/concentrate1/obsidian-yolo/releases>
 2. 从语音版发布下载 `main.js`、`manifest.json` 和 `styles.css`。
-3. 备份当前 vault 和 YOLO 插件设置。
-4. 在 vault 中创建或打开以下目录：
+3. 备份当前 vault 。
+4. 在 vault 中创建以下目录：
 
    ```text
    <vault>/.obsidian/plugins/yolo/
    ```
 
 5. 把下载的三个文件复制到该目录。
-6. 在 Obsidian 中打开“设置 -> 第三方插件”，如果已安装上游 YOLO，先禁用它，再启用本语音版。
+
+**如果已安装YOLO，这三个文件可以直接覆盖。请勿在重要 vault 使用或替换成此版本。非重要仓库也请备份 plugins/yolo/ 以免触发问题。未来如合并入上游，或需再次手动替换。**
 
 语音版版本号使用 `-voice` 后缀，例如 `1.5.10.1-voice`。插件内更新检查只跟随 `yolo-unofficial-dev` 语音发布通道，不会和上游 YOLO 发布比较。
 
 ## 配置指南
 
-先从这里开始：[语音配置总目录](./docs/tutorials/voice/voice-configuration.md)
+从这里开始：[语音功能配置教程](./docs/tutorials/voice/voice-configuration.md)
 
 ## 技术说明
 
@@ -96,7 +99,7 @@
 
 - 本 fork 中的 `main` 应保持为上游镜像分支。
 - `yolo-unofficial-dev` 用来集中查看和试用这套语音版改动。
-- 实际希望上游合并的功能 PR 仍然是 `context-voice-input`，不是 `yolo-unofficial-dev`。
+- 用于上游合并的功能 [PR](https://github.com/Lapis0x0/obsidian-yolo/pull/362) 仍然是 `context-voice-input`，不是 `yolo-unofficial-dev`。
 
 ## 原项目
 

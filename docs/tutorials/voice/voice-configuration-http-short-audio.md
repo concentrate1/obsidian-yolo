@@ -1,12 +1,9 @@
 # HTTP 短音频 ASR 配置教程
 
-本文只负责 **HTTP 短音频** 栏位的 ASR 提供商配置。语音功能入口、三栏选择逻辑和路线判断见 [语音配置教程总目录](./voice-configuration.md)。WebSocket 提供商见 [WebSocket ASR 配置](./voice-configuration-websocket-asr.md)；HTTP 长音频文件提供商见 [HTTP 长音频文件配置](./voice-configuration-http-long-audio.md)。
+本文只涉及 **HTTP 短音频** 栏位的 ASR 提供商配置，可用于上下文感知输入和音频文件转写功能。
 
-HTTP 短音频分段上传时，本地切片统一转成 WAV；部分提供商例如 Aliyun / DashScope 需要更短的 WAV 分段。
 
-插件执行时优先按当前提供商的 `maxDurationMs` / 用户设置的 chunk 时长决定实际分段。已知 `maxRequestBytes` 只用于设置页提醒：当用户切换音频文件转写提供商或修改 chunk 时长，且当前组合可能让 WAV chunk 超过已知请求大小上限时，会弹出提示建议改到具体秒数。
-
-## HTTP 短音频协议
+## 协议类型
 
 ### OpenAI-compatible transcription
 
@@ -14,12 +11,12 @@ HTTP 短音频分段上传时，本地切片统一转成 WAV；部分提供商�
 
 插件配置：
 
-- 栏位：`HTTP 短音频`
 - API 形式：`Transcription`
-- Base URL：服务基础地址，例如 `https://api.openai.com/v1`
-- 路径：通常 `/audio/transcriptions`
-- Model：必须填写；即使本地服务忽略 model，也建议填启动时使用的模型名
-- 音频格式：默认 `auto`；服务拒绝 webm / opus 时切到 `wav`
+- Base URL：服务商提供
+- 转写路径：通常为 `/audio/transcriptions`
+- API 密钥：从服务商获取
+- 模型：根据服务商信息填写
+- 音频格式：默认 `auto`；服务拒绝 webm / opus 时切到 `wav`，文件更大但兼容性更好
 - 请求方式：优先 `node` 或 `auto`，遇到本地服务 / CORS 问题可试 `obsidian` 或 `browser`
 
 ### OpenAI-compatible Chat Audio
@@ -28,72 +25,86 @@ HTTP 短音频分段上传时，本地切片统一转成 WAV；部分提供商�
 
 插件配置：
 
-- 栏位：`HTTP 短音频`
 - API 形式：`Chat Audio`
-- Base URL：服务基础地址
-- 路径：通常 `/chat/completions`
-- Model：必须填写
-- 音频 content 格式：
+- Base URL：服务商提供
+- 对话补全路径：通常为 `/chat/completions`
+- API 密钥：从服务商获取
+- 模型：根据服务商信息填写
+- 音频内容载体：
   - OpenAI / OpenRouter / Gemini OpenAI-compatible：`input_audio (base64)`
-  - 阿里百炼 / DashScope：`input_audio (data URL)`
+  - 阿里百炼 (DashScope)：`input_audio (data URL)`
   - 部分 vLLM 镜像：可试 `audio_url`
-- 音频格式：默认 `auto`；Aliyun / DashScope 建议 `wav`
+- 音频格式：默认 `auto`；服务拒绝 webm / opus 时切到 `wav`，文件更大但兼容性更好
+- 请求方式：优先 `node` 或 `auto`，遇到本地服务 / CORS 问题可试 `obsidian` 或 `browser`
 
 ## 在线接入
 
 ### OpenAI
 
-OpenAI 官方 Speech-to-Text，默认在线起步路径。
+OpenAI Speech-to-Text 支持 `transcriptions` 和 `translations` 两类端点，本插件的 HTTP 短音频配置使用的是 `transcriptions`。
 
-- 栏位：`HTTP 短音频`
+官方文档：https://platform.openai.com/docs/guides/speech-to-text
+
+插件配置：
+
 - API 形式：`Transcription`
 - Base URL：`https://api.openai.com/v1`
-- 路径：`/audio/transcriptions`
-- Model 候选：`whisper-1`、`gpt-4o-transcribe`、`gpt-4o-mini-transcribe` 等
+- 转写路径：`/audio/transcriptions`
+- 模型：`whisper-1`、`gpt-4o-transcribe`、`gpt-4o-mini-transcribe` 等
 - 音频格式：`auto`
+
 
 ### 智谱 GLM
 
-智谱开放平台通过 OpenAI-compatible `/v4/audio/transcriptions` 提供 GLM 系语音转文本模型。官方文档：https://docs.bigmodel.cn/api-reference/模型-api/语音转文本
+智谱开放平台通过 OpenAI-compatible `/v4/audio/transcriptions` 提供 GLM 系语音转文本模型。
 
-- 栏位：`HTTP 短音频`
+官方文档：https://docs.bigmodel.cn/api-reference/模型-api/语音转文本
+
+插件配置：
+
 - API 形式：`Transcription`
 - Base URL：`https://open.bigmodel.cn/api/paas/v4`
-- 路径：`/audio/transcriptions`
-- Model 候选：`glm-asr-2512` 等
+- 转写路径：`/audio/transcriptions`
+- 模型：`glm-asr-2512` 等
 - 音频格式：`wav`
 
 ### Google Gemini
 
-Gemini 在 OpenAI-compatible 模式下支持音频输入，可走 Chat Audio。
+Gemini 在本插件里应走 OpenAI-compatible Chat Audio，把音频作为 `input_audio` content part 发到 `/chat/completions`。
 
-- 栏位：`HTTP 短音频`
+官方文档：
+- OpenAI 兼容接入：<https://ai.google.dev/gemini-api/docs/openai>
+- 音频理解：<https://ai.google.dev/gemini-api/docs/audio>
+
+插件配置：
 - API 形式：`Chat Audio`
 - Base URL：`https://generativelanguage.googleapis.com/v1beta/openai`
-- 路径：`/chat/completions`
-- Model 候选：`gemini-3.5-flash`、`gemini-3.1-flash-lite`、`gemini-2.5-flash` 等
-- 音频 content 格式：`input_audio (base64)`
-- 音频格式：`auto`，遇到格式错误再试 `wav`
+- 对话补全路径：`/chat/completions`
+- 模型：`gemini-3.5-flash`、`gemini-3.1-flash-lite`、`gemini-2.5-flash` 等
+- 音频内容载体：`input_audio (base64)`
+- 音频格式：`wav`
 
-### 阿里百炼 / DashScope
 
-百炼的 `qwen3-asr-flash` 可接在 OpenAI-compatible chat-completions 上。官方文档：https://help.aliyun.com/zh/model-studio/qwen-asr-api-reference
+### 阿里百炼（DashScope）
 
-- 栏位：`HTTP 短音频`
+阿里云百炼平台的 `qwen3-asr-flash` 可接在 OpenAI-compatible chat-completions 上。
+
+官方文档：https://help.aliyun.com/zh/model-studio/qwen-asr-api-reference
+
+插件配置：
 - API 形式：`Chat Audio`
 - Base URL：
   - 中国大陆：`https://dashscope.aliyuncs.com/compatible-mode/v1`
   - 国际：`https://dashscope-intl.aliyuncs.com/compatible-mode/v1`
-- 路径：`/chat/completions`
-- Model：`qwen3-asr-flash`
-- 音频 content 格式：`input_audio (data URL)`
+- 对话补全路径：`/chat/completions`
+- 模型：`qwen3-asr-flash`
+- 音频内容载体：`input_audio (data URL)`
 - 音频格式：`wav`
 
-文件转写提示：Aliyun / DashScope 对 data-uri 和多模态文件大小更敏感。插件会按提供商能力把 WAV 分段自动压到更短时长；如果当前设置的 chunk 时长和已知请求大小上限冲突，设置页会提示建议值。若仍遇到上传大小错误，请继续调低 HTTP 短音频 chunk 时长。
 
 ## 本地部署
 
-以下命令以 Windows / PowerShell 和 NVIDIA GPU 为主要参考。其它平台可类比调整。
+以下命令以 Windows / PowerShell 和 NVIDIA GPU 为例。
 
 中国大陆下载部分模型可能需要网络工具。pip 包可使用镜像源加速；如果需要先安装 CUDA 版 PyTorch，可参考：
 
@@ -111,7 +122,7 @@ WhisperLiveKit 暴露 OpenAI-compatible `/v1/audio/transcriptions`，也提供 W
 
 安装：
 
-需要安装 Python 3.11~3.13。
+需要准备 Python 3.11~3.13。
 
 ```powershell
 # CPU
@@ -139,23 +150,22 @@ wlk run whisper:large-v3 --host 127.0.0.1 --port 8000 --language zh
 
 首次启动会自动拉模型。模型选项和显存占用可参考 WhisperLiveKit 的 [default and custom models](https://github.com/QuentinFuxa/WhisperLiveKit/blob/main/docs/default_and_custom_models.md)。
 
-HTTP 短音频通常使用 `auto` 或 `wav`，不需要给 WhisperLiveKit 加 `--pcm-input`。如果同一个 WhisperLiveKit 服务也要给 WebSocket `PCM 16k` 配置使用，启动命令才需要加 `--pcm-input`，并且 WebSocket 提供商的音频格式要与启动参数保持一致。
 
 插件配置：
 
 - 栏位：`HTTP 短音频`
 - API 形式：`Transcription`
 - Base URL：`http://127.0.0.1:8000/v1`
-- 路径：`/audio/transcriptions`
-- Model：与启动参数一致，例如 `whisper:large-v3`
-- API key：留空
+- 转写路径：`/audio/transcriptions`
+- API 密钥：留空
+- 模型：与启动参数一致，例如 `whisper:large-v3`
 - 音频格式：`auto`
 
-启动后可打开 `http://127.0.0.1:8000` 使用 WhisperLiveKit 自带 WebUI 做快速验证。
+启动后可打开 `http://127.0.0.1:8000` 使用 WhisperLiveKit 自带 WebUI 快速验证。
 
 ### FunASR HTTP 短音频
 
-FunASR 支持中文与中英混合识别，`funasr-server` 可对接 OpenAI-compatible transcription。注意：这只是 HTTP 短音频 / 普通转写路线；长音频带说话人方案使用 **HTTP 长音频** 的 FunASR local 配置，见 [HTTP 长音频文件配置](./voice-configuration-http-long-audio.md)。
+FunASR 支持中文与中英混合识别，`funasr-server` 可对接 OpenAI-compatible transcription。这里只涉及 HTTP 短音频，长音频带说话人的方案见 [HTTP 长音频文件配置](./voice-configuration-http-long-audio.md)。
 
 官方项目：https://github.com/modelscope/FunASR
 接入文档：https://modelscope.github.io/FunASR/agent.html
@@ -184,7 +194,7 @@ funasr-server --device cpu --port 8001 --model sensevoice
 funasr-server --device cuda --port 8001 --model sensevoice
 ```
 
-模型候选：`sensevoice`（中文 / 中英混合）、`paraformer`、`paraformer-en`、`fun-asr-nano`，或显式 ModelScope 模型路径。
+模型：`sensevoice`（中文 / 中英混合）、`paraformer`、`paraformer-en`、`fun-asr-nano`，或显式 ModelScope 模型路径。
 
 首次启动会从 ModelScope 拉模型，默认缓存在 `%USERPROFILE%\.cache\modelscope`。
 
@@ -193,15 +203,15 @@ funasr-server --device cuda --port 8001 --model sensevoice
 - 栏位：`HTTP 短音频`
 - API 形式：`Transcription`
 - Base URL：`http://127.0.0.1:8001/v1`
-- 路径：`/audio/transcriptions`
-- Model：`sensevoice`
-- API key：留空
+- 转写路径：`/audio/transcriptions`
+- API 密钥：留空
+- 模型：`sensevoice`
 - 音频格式：`wav`
 
 ## 排错
 
 - **下拉菜单里没有提供商**：先到 **模型 → 语音识别 (ASR)** 添加配置。上下文感知语音输入只显示 **HTTP 短音频** 和 **WebSocket**。
-- **HTTP 提供商测试提示缺少 model**：HTTP 短音频配置必须填写 model。即使服务端忽略，也建议填服务启动模型名。
-- **文件转写找不到切段设置**：只有选择 **HTTP 短音频** 时才显示切段相关设置；WebSocket 和 HTTP 长音频不显示。
-- **Aliyun / DashScope 文件过大**：降低音频文件转写中的 chunk 时长。分段上传实际是 WAV，`auto` 不代表 chunk 会保持原始格式。
-- **本地服务连不上**：先用浏览器或 curl 验证服务地址，再检查 Base URL 是否包含正确的 `/v1`。
+- **HTTP 提供商测试提示缺少 model**：HTTP 短音频表单会要求填写模型，插件会把它作为 `model` 字段发送给服务端。使用本地服务时，也应填写启动时使用的模型名，避免和服务端实际加载的模型不一致。
+- **文件转写找不到切段设置**：只有选择 **HTTP 短音频** 时才涉及切段相关设置；WebSocket 和 HTTP 长音频不显示。
+- **Aliyun DashScope 文件过大**：降低音频文件转写中的 chunk 时长。
+- **本地服务连不上**：可先用浏览器或 curl 验证服务地址。

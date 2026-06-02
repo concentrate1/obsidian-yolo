@@ -1,8 +1,6 @@
 # 语音版实现说明
 
-本文记录非官方语音版的实际维护结构，面向上游的维护者。`yolo-unofficial-dev` 用来集中查看和试用这套语音版改动；实际希望上游合并的功能 PR 仍然是 `context-voice-input`。用户侧 README 和配置指南只说明如何安装、配置和使用；这里记录实现边界、关键取舍和分支关系。
-
-相关上游 PR：[Lapis0x0/obsidian-yolo#362](https://github.com/Lapis0x0/obsidian-yolo/pull/362)。
+本文记录非官方语音版的具体实现细节。`yolo-unofficial-dev` 用来集中查看和试用这套语音版改动，并提供配置指南说明如何安装、配置和使用。用于上游合并的 [PR](https://github.com/Lapis0x0/obsidian-yolo/pull/362) 仍然是 `context-voice-input`。
 
 ## 总体边界
 
@@ -12,9 +10,7 @@
 - 音频文件转写：选择或拖入音频文件，按能力规划上传、切段或流式发送，然后插入当前笔记或备用笔记。
 - 语音朗读：把选中文本或笔记正文交给 TTS 生成音频，在浮岛中播放、暂停、拖出或保存。
 
-三条工作流共享语音浮岛和状态栏展示，但不共享内部 session。口述输入需要 ASR 后再走打磨模型，音频文件转写只做 ASR 和插入，朗读只做文本清理、TTS 合成和播放。
-
-本文重点说明语音功能实现。发布脚本、发布说明模板、标签后缀、GitHub Actions 和更新通道属于 fork 维护内容，不作为上游功能 PR 的实现说明展开。
+三条工作流共享语音浮岛和状态栏展示，但不共享内部 session。口述输入需要 ASR 后再走打磨模型，音频文件转写做 ASR 和插入，朗读做文本清理、TTS 合成和播放。
 
 ## 入口与状态
 
@@ -124,7 +120,7 @@ WebSocket ASR 位于 `src/core/asr/webSocketAsr/`：
 - `whisperLiveKitAdapter.ts` 处理 WhisperLiveKit 原生 `/asr` 协议。
 - `common.ts` 共享 URL 构造、WebSocket 创建、错误归并和帧解析。
 
-浏览器 WebSocket 不能自定义 `Authorization` header，因此 Deepgram-compatible 路线使用协议字段携带 token。这是传输层约束，不应泄漏到普通用户文案里；配置指南只说明需要填写的字段。
+浏览器 WebSocket 不能自定义 `Authorization` header，因此 Deepgram-compatible 路线使用协议字段携带 token。
 
 ### 配置测试与传输模式
 
@@ -141,16 +137,19 @@ TTS 的 HTTP 传输在 `src/core/tts/httpTransport.ts` 中复用主 LLM 请求�
 
 ### 打磨 prompt
 
-`voicePromptBuilder.ts` 构造打磨模型输入。输入包含：
+`voicePromptBuilder.ts` 构造打磨模型输入。消息顺序是：
 
-- 当前文件路径和标题。
-- 光标前窗口。
-- 光标后窗口。
-- 当前选区。
-- ASR 原始文本。
-- 上一段草稿。
-- 可选文档摘要和热词。
-- 系统提示词预设或自定义系统提示词。
+1. `system` message：系统提示词预设或自定义系统提示词。
+2. `user` message 中的 `<target_metadata>`：当前文件路径和标题。
+3. 可选 `<document_summary>`：当前文档摘要。
+4. 可选 `<asr_hot_words>`：从摘要调用中提取的 ASR 热词。
+5. `<cursor_before>`：光标前窗口。
+6. 可选 `<cursor_after>`：光标后窗口；如果只有空白会省略，避免模型误判插入位置。
+7. 可选 `<current_selection>`：当前选区。
+8. 可选 `<previous_model_output>`：上一段已打磨草稿。
+9. `<current_asr_final>`：本段 ASR 原始文本。
+
+这个顺序是有意固定的：文件元信息、摘要和热词放在 user message 前部，光标前文再尽量复用已记录的前文锚点，变化最大的上一段草稿和本段 ASR 放在末尾。这样连续听写时，提供商的自动前缀缓存或显式 `cache_control` 更容易命中前面的稳定字节。
 
 打磨模型通过结构化 JSON 输出：
 
@@ -160,7 +159,7 @@ TTS 的 HTTP 传输在 `src/core/tts/httpTransport.ts` 中复用主 LLM 请求�
 - `text`：准备落笔的文本。
 - `notice`：用于取消、提醒或说明无法生成正文的情况。
 
-`voiceDecisionParser.ts` 严格解析这些字段，避免把无效 JSON、额外上下文或模型解释文字直接写入编辑器。`voiceDecisionBoundaryFallback.ts` 负责一些确定性的边界修正，例如光标处标点和前导空格处理，让模型专注于 ASR 清理和上下文改写。
+`voiceDecisionParser.ts` 严格解析这些字段，避免把无效 JSON、额外上下文或模型解释文字直接写入编辑器。`voiceDecisionBoundaryFallback.ts` 负责一些确定性的边界修正，例如光标处标点和前导空格处理，让模型专注于 ASR 清理和上下文改写。（部分模型不擅长此类处理，增加大量系统提示词才能稳定）
 
 ### 灰字预览与 Tab 接受
 
@@ -172,7 +171,7 @@ TTS 的 HTTP 传输在 `src/core/tts/httpTransport.ts` 中复用主 LLM 请求�
 - `ContextVoiceInputWorkflow.tryRejectFromView()` 接管 Esc 取消。
 - `src/features/editor/tab-completion/tabCompletionController.ts` 在语音 session 活跃时暂停 Tab completion，避免同一个 Tab 同时接受补全和语音草稿。
 
-这个设计让用户只需要理解“灰字 + Tab”的编辑器语义。ASR 或打磨出错时，正文仍然保持未修改状态。
+这个设计让用户只需要理解“灰字 + Tab”的编辑器语义。ASR 或打磨出错时，正文仍然保持未修改状态。移动端仍可通过浮岛按钮接受打磨后的文字。
 
 ### 前缀缓存
 
@@ -183,7 +182,7 @@ TTS 的 HTTP 传输在 `src/core/tts/httpTransport.ts` 中复用主 LLM 请求�
 当前实现为每个文件维护最多 4 个前文锚点，按 LRU 淘汰：
 
 - 第一次打磨或没有合法锚点时记录新的 `prefixStart`，初始窗口长度来自 `contextRangeChars`。
-- 每个锚点保存 `prefixStart` 附近的原始 anchor bytes，而不是哈希；后续直接比较同一窗口内容。
+- 每个锚点保存 `prefixStart` 附近的原始 anchor bytes，后续直接比较同一窗口内容。
 - 后续打磨直接发送 `doc.slice(prefixStart, cursor)`，让请求开头保持稳定并随着写作向后增长。
 - 当多个锚点都合法时选择 `prefixStart` 最小的锚点，也就是最长、最利于 cache 的前文 slice。
 - 当用户跳到另一个远距离区域时创建新锚点；返回旧区域时，只要旧锚点仍在 4 个 slot 内且 anchor bytes 未漂移，就能继续命中。
@@ -198,7 +197,7 @@ TTS 的 HTTP 传输在 `src/core/tts/httpTransport.ts` 中复用主 LLM 请求�
 `documentSummaryManager.ts` 维护内存级文档摘要和热词：
 
 - 按文件路径缓存，不写入 vault。
-- 默认 `smart` 刷新：没有固定 TTL，而是比较当前文档和已摘要文本的字符 shingle profile。
+- 默认 `smart` 刷新：没有固定 TTL，而是比较当前文档和已摘要文本的重叠字符片段特征，用一个轻量文本相似度指纹判断内容漂移。
 - 支持会话级、15 分钟和 1 小时等非智能刷新策略。
 - 文件 rename / delete 时清理缓存。
 - 录音开始时可后台预热。
@@ -206,7 +205,7 @@ TTS 的 HTTP 传输在 `src/core/tts/httpTransport.ts` 中复用主 LLM 请求�
 
 `smart` 模式把内容变化分成三类：`fresh` 直接复用旧摘要；`soft-stale` 后台刷新但继续服务旧摘要；`hard-stale` 后台刷新并暂时返回 `null`，避免把明显过期的摘要传给打磨模型。长文只截取前 `MAX_SUMMARY_INPUT_CHARS` 做摘要，摘要和热词是提示信息，不作为全文事实来源。
 
-摘要用于让打磨模型知道当前笔记主题和写作风格；热词用于修正 ASR 容易听错的专有名词。后续如果某些 ASR 提供商原生支持 vocabulary hint，可把热词传给 ASR 端，但打磨 prompt 中的热词仍应作为备用路径。
+摘要用于让打磨模型知道当前笔记主题和写作风格；热词用于修正 ASR 容易听错的专有名词。后续可以考虑对接 ASR 提供商原生支持 vocabulary hint，把热词传给 ASR 端，但打磨 prompt 中的热词仍应作为备用路径。
 
 ## 音频文件转写
 
@@ -238,9 +237,9 @@ TTS 的 HTTP 传输在 `src/core/tts/httpTransport.ts` 中复用主 LLM 请求�
 
 音频文件转写有几类显式保护：
 
-- 本地 WAV / PCM 发送会先按时长估算请求体大小，超过安全时长时提示改用长音频提供商。
+- 本地 WAV / PCM 发送会先按时长估算请求体大小，超过安全时长时提示切换到支持长音频文件的 ASR 配置。
 - 切段上传受 `maxConcurrentChunks`、`chunkStartStaggerMs` 和 `chunkOverlapMs` 控制，避免一次性把所有切片同时压给远端。
-- 如果文件过大且浏览器无法本地解码，不强行切段；规划会提示选择长音频提供商。
+- 如果文件过大且浏览器无法本地解码，不强行切段；规划阶段会给出原因，并提示切换到支持长音频文件的 ASR 配置。
 - WebSocket 文件流式对 PCM / WAV 大文件有保护；m4a / mp4 的 `moov` 在文件尾部时不直接按原文件流式发送，避免接收端拿不到必要头信息。
 - 运行期失败会给出“缩短切段时长”的提示，便于区分提供商请求大小限制和真正的协议错误。
 
@@ -260,10 +259,10 @@ TTS 的 HTTP 传输在 `src/core/tts/httpTransport.ts` 中复用主 LLM 请求�
 
 `src/features/editor/voice/read-aloud/readAloudController.ts` 处理朗读 session。它从当前选区或笔记正文捕获文本，再交给 `readAloudText.ts`：
 
-- 选区模式会规整换行和空白。
-- 笔记模式可按设置选择原始 Markdown 或可读文本。
+- 朗读当前选区时会规整换行和空白。
+- 朗读 Markdown 时可按“Markdown 模式”设置选择“可读”或“原始 Markdown”。
 - 长文本会按目标字符数和 TTS 提供商能力切段。
-- 多段朗读会进入确认状态，避免用户误把整篇长文提交给 TTS。
+- 多段朗读会进入确认状态，避免用户误把整篇长文提交给 TTS（对并发亦有控制）。
 
 ### TTS 合成与播放
 
@@ -315,7 +314,7 @@ TTS 提供商位于 `src/core/tts/`：
 - 对数值范围做 clamp，避免旧配置或异常配置进入运行时。
 - 移除开发期字段，防止后续逻辑继续读取被废弃的配置形态。
 
-迁移文件带有测试 `67_to_68.test.ts`。后续合入主线或上游新版本时，如果迁移编号发生冲突，应顺延本分支语音迁移，而不是把两条历史的迁移逻辑塞进同一个版本文件。
+迁移文件带有测试 `67_to_68.test.ts`。后续合入主线或上游新版本时，如果迁移编号发生冲突，会顺延本分支语音迁移。
 
 ## 与既有功能的交互
 
@@ -325,7 +324,7 @@ TTS 提供商位于 `src/core/tts/`：
 
 这个取舍是为了避免某些默认启用 thinking 的模型在轻量改写任务上先长时间思考再输出 JSON。语音打磨、Tab 补全、标题生成等辅助任务都需要“尽快给出可用结果”，不适合继承聊天主流程的推理默认值。
 
-`src/core/llm/debugCapture.ts` 会记录辅助调用的元信息，便于排查打磨 prompt、token 使用和 cache 命中情况。
+`src/core/llm/debugCapture.ts` 会记录辅助调用的元信息在控制台输出，便于排查打磨 prompt 的 token 使用和 cache 命中情况。
 
 ### 主入口
 
@@ -340,11 +339,8 @@ TTS 提供商位于 `src/core/tts/`：
 
 `src/styles/editor/voice-input.css` 定义浮岛、波形、状态、灰字层级和设置页布局，`src/styles/index.css` 聚合后生成 `styles.css`。
 
-`src/i18n/*` 包含程序内文案。发布文档不通过程序内本地化系统管理。
+`src/i18n/*` 新增程序内文案。
 
-## 分支维护边界
-
-`context-voice-input` 应聚焦可提交给上游的产品功能。`yolo-unofficial-dev` 承载非官方发布物、用户可见中文发布文档和 fork 专属更新通道。后续把功能 PR 向上游推进时，不应把 README 发布口径、发布说明模板、发布脚本、GitHub Actions 或 `-voice` 版本后缀混入 `context-voice-input`。
 
 ## 测试覆盖
 

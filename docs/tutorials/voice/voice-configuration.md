@@ -29,11 +29,11 @@
 1. [HTTP 短音频 ASR 配置](./voice-configuration-http-short-audio.md)
    - OpenAI-compatible Transcription
    - OpenAI-compatible Chat Audio
-   - 智谱 GLM、Google Gemini、阿里百炼 / DashScope
+   - 智谱 GLM、Google Gemini、阿里百炼
    - WhisperLiveKit / FunASR 的本地 HTTP 短音频配置
 
 
-2. [HTTP 长音频文件配置](./voice-configuration-http-long-audio.md)
+2. [HTTP 长音频文件转写配置](./voice-configuration-http-long-audio.md)
    - FunASR local
    - Deepgram pre-recorded
    - 腾讯云极速版
