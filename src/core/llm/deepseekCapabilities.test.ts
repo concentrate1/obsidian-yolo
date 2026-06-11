@@ -45,18 +45,15 @@ describe('applyDeepSeekCapabilities', () => {
     })
   })
 
-  it('skips deepseek-reasoner regardless of level (V3.2 has no toggle)', () => {
+  it('skips legacy deepseek-reasoner regardless of level', () => {
     expect(run(reasonerModel, 'off')).toEqual({})
     expect(run(reasonerModel, 'high')).toEqual({})
   })
 
-  it('still disables thinking for off when model has no reasoning type', () => {
+  it('skips when model has no reasoning type', () => {
     expect(
       run({ model: 'deepseek-v4-pro', reasoningType: 'none' }, 'off'),
-    ).toEqual({ thinking: { type: 'disabled' } })
-  })
-
-  it('skips enabled thinking levels when model has no reasoning type', () => {
+    ).toEqual({})
     expect(
       run({ model: 'deepseek-v4-pro', reasoningType: 'none' }, 'high'),
     ).toEqual({})

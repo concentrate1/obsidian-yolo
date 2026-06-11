@@ -37,3 +37,4 @@ Reference/
 .cursor/
 .claude/
 scripts/bench-tool-disclosure/
+.cursorignore

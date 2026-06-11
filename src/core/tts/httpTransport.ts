@@ -1,6 +1,9 @@
 import type { TtsTransportMode } from '../../settings/schema/setting.types'
 import { createObsidianFetch } from '../../utils/llm/obsidian-fetch'
-import { runWithRequestTransport } from '../llm/requestTransport'
+import {
+  resolveExplicitRequestTransportMode,
+  runWithRequestTransport,
+} from '../llm/requestTransport'
 import { createBrowserFetch, createDesktopNodeFetch } from '../llm/sdkFetch'
 
 type RawBody = string | ArrayBuffer | Uint8Array
@@ -21,27 +24,19 @@ export async function sendTtsHttpRequest(args: {
   transportMode: TtsTransportMode
   signal?: AbortSignal
 }): Promise<TtsHttpResponse> {
-  const {
-    url,
-    method = 'POST',
-    headers = {},
-    body,
-    transportMode,
-    signal,
-  } = args
-
-  const run = (transportFetch: typeof fetch) =>
+  const mode = resolveExplicitRequestTransportMode(args.transportMode)
+  const run = (transportFetch: typeof fetch): Promise<TtsHttpResponse> =>
     fetchToTtsResponse(
-      transportFetch(url, {
-        method,
-        headers,
-        body: body as BodyInit,
-        signal,
+      transportFetch(args.url, {
+        method: args.method ?? 'POST',
+        headers: args.headers ?? {},
+        body: args.body as BodyInit,
+        signal: args.signal,
       }),
     )
 
   return runWithRequestTransport({
-    mode: transportMode,
+    mode,
     runBrowser: () => run(createBrowserFetch()),
     runObsidian: () => run(createObsidianFetch()),
     runNode: () => run(createDesktopNodeFetch()),
