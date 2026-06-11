@@ -32,10 +32,11 @@
 - 模型：根据服务商信息填写
 - 音频内容载体：
   - OpenAI / OpenRouter / Gemini OpenAI-compatible：`input_audio (base64)`
-  - 阿里百炼 (DashScope)：`input_audio (data URL)`
+  - 阿里百炼 (DashScope)、小米 MiMo：`input_audio (data URL)`
   - 部分 vLLM 镜像：可试 `audio_url`
 - 音频格式：默认 `auto`；服务拒绝 webm / opus 时切到 `wav`，文件更大但兼容性更好
 - 请求方式：优先 `node` 或 `auto`，遇到本地服务 / CORS 问题可试 `obsidian` 或 `browser`
+- 自定义参数：可直接添加顶层 JSON 字段。
 
 ## 在线接入
 
@@ -100,6 +101,22 @@ Gemini 在本插件里应走 OpenAI-compatible Chat Audio，把音频作为 `inp
 - 模型：`qwen3-asr-flash`
 - 音频内容载体：`input_audio (data URL)`
 - 音频格式：`wav`
+
+### 小米 MiMo ASR
+
+小米 MiMo-V2.5-ASR 走 OpenAI-compatible `/v1/chat/completions`。官方示例把音频放在 `input_audio.data` 的 data URL 中，并通过 `asr_options` 控制语言等 ASR 参数。
+
+官方文档：https://platform.xiaomimimo.com/docs/zh-CN/api/audio/Speech-Recognition
+
+插件配置：
+- API 形式：`Chat Audio`
+- Base URL：`https://api.xiaomimimo.com/v1`
+- 对话补全路径：`/chat/completions`
+- API 密钥：从小米 MiMo 控制台获取
+- 模型：`mimo-v2.5-asr`
+- 音频内容载体：`input_audio (data URL)`
+- 音频格式：`auto`；如果服务端拒绝当前录音格式，可改为 `wav`
+- 自定义参数：默认不内置 `asr_options`。如需指定语言，可添加自定义参数 `"asr_options":{"language":"zh"}`。
 
 
 ## 本地部署
@@ -210,7 +227,7 @@ funasr-server --device cuda --port 8001 --model sensevoice
 
 ## 排错
 
-- **下拉菜单里没有提供商**：先到 **模型 → 语音识别 (ASR)** 添加配置。上下文感知语音输入只显示 **HTTP 短音频** 和 **WebSocket**。
+- **下拉菜单里没有提供商**：先到 **模型 → 语音识别 (ASR)** 添加配置。上下文感知语音输入显示 **HTTP 短音频**、**HTTP 长音频** 和 **WebSocket**。
 - **HTTP 提供商测试提示缺少 model**：HTTP 短音频表单会要求填写模型，插件会把它作为 `model` 字段发送给服务端。使用本地服务时，也应填写启动时使用的模型名，避免和服务端实际加载的模型不一致。
 - **文件转写找不到切段设置**：只有选择 **HTTP 短音频** 时才涉及切段相关设置；WebSocket 和 HTTP 长音频不显示。
 - **Aliyun DashScope 文件过大**：降低音频文件转写中的 chunk 时长。

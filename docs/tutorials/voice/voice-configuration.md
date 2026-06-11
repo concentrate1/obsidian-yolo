@@ -7,10 +7,10 @@
 ## 入口速览
 
 - **语音 → 语音浮岛**：最上方的总开关控制浮岛是否显示；模式列表显示当前已启用的点按、长按、文件转写、朗读等状态，可排序，也可逐项隐藏。
-- **模型 → 语音识别（TTS）**：管理 ASR 端点。配置区固定分为 **HTTP 短音频**、**HTTP 长音频**、**WebSocket** 三栏。
+- **模型 → 语音识别（ASR）**：管理 ASR 端点。配置区固定分为 **HTTP 短音频**、**HTTP 长音频**、**WebSocket** 三栏。
 - **模型 → 语音生成（TTS）**：管理朗读使用的 TTS 端点、模型、音色和输出格式。
-- **语音 → 上下文感知语音输入**：选择口述输入使用的 ASR 提供商，只显示 **HTTP 短音频** 和 **WebSocket**。
-- **语音 → 音频文件转写**：选择拖入 / 选择音频文件时使用的 ASR 提供商，显示 **HTTP 短音频**、**HTTP 长音频**、**WebSocket**。其中 **HTTP 长音频** 只指长音频文件提供商；已接入 FunASR local、Deepgram pre-recorded 和腾讯云极速版。**WebSocket** 统管短录音实时转写和音频文件流式转写。只有选中 **HTTP 短音频** 时才显示切段、并发、错峰、overlap、段首时间等设置。
+- **语音 → 上下文感知语音输入**：选择口述输入使用的 ASR 提供商，显示 **HTTP 短音频**、**HTTP 长音频**、**WebSocket**。选择 HTTP 长音频时，当前录音段会按一次整段请求提交，不使用音频文件转写里的切段、并发、错峰或 overlap 设置。
+- **语音 → 音频文件转写**：选择拖入 / 选择音频文件时使用的 ASR 提供商，显示 **HTTP 短音频**、**HTTP 长音频**、**WebSocket**。其中 **HTTP 长音频** 只指长音频提供商；已接入 FunASR local、Deepgram pre-recorded、腾讯云极速版、火山 / 豆包极速版。**WebSocket** 统管短录音实时转写和音频文件流式转写。只有选中 **HTTP 短音频** 时才显示切段、并发、错峰、overlap、段首时间等设置。
 - **语音 → 朗读**：配置朗读开关、默认提供商、分段、缓存和 Markdown 朗读模式。
 
 
@@ -18,7 +18,7 @@
 
 | 场景 | 推荐模式 | 说明 |
 | --- | --- | --- |
-| 口述输入 + 结合上下文纠错/翻译 | HTTP 短音频 / WebSocket | 上下文感知语音输入绑定这两类 |
+| 口述输入 + 结合上下文纠错/翻译 | HTTP 短音频 / HTTP 长音频 / WebSocket | HTTP 长音频会按当前录音段整段提交 |
 | 拖入短音频，只要正文 | HTTP 短音频 | 可直传，超过限制时本地切段 |
 | 长会议/访谈转写，需要说话人 | HTTP 长音频 | 走提供商原生长音频能力，功能更丰富 |
 | 长音频转写但不希望外传 | HTTP 长音频 / WebSocket | 语音转文字、活动检测、标点恢复、说话人识别都有本地方案 |
@@ -29,7 +29,7 @@
 1. [HTTP 短音频 ASR 配置](./voice-configuration-http-short-audio.md)
    - OpenAI-compatible Transcription
    - OpenAI-compatible Chat Audio
-   - 智谱 GLM、Google Gemini、阿里百炼
+   - 智谱 GLM、Google Gemini、阿里百炼、小米 MiMo
    - WhisperLiveKit / FunASR 的本地 HTTP 短音频配置
 
 
@@ -37,6 +37,7 @@
    - FunASR local
    - Deepgram pre-recorded
    - 腾讯云极速版
+   - 火山 / 豆包极速版
 
 3. [WebSocket ASR 配置](./voice-configuration-websocket-asr.md)
    - Deepgram-compatible `/listen`
@@ -47,4 +48,5 @@
    - OpenRouter
    - 小米 MiMo
    - 百炼 CosyVoice
+   - 火山 / 豆包 TTS
    - Kokoro-FastAPI

@@ -7,8 +7,8 @@
 - `openai-compatible-speech`：兼容 OpenAI Audio Speech API，通常是 `POST /v1/audio/speech`，返回音频字节流。
 - `mimo-chat-audio-tts`：小米 MiMo 通过 chat completions 返回 `message.audio.data` base64。
 - `dashscope-cosyvoice`：百炼 CosyVoice，DashScope HTTP JSON。
+- `volcengine-tts-http`：火山 / 豆包大模型 TTS，使用火山引擎 HTTP v3 语音合成接口。
 
-三类协议**不可互换**。例如 OpenRouter 是 `openai-compatible-speech`，MiMo 不是；JSON 包装音频的自备代理当前不在教程范围内。
 
 
 ## 在线接入
@@ -74,6 +74,22 @@ HTTP API 参考：https://help.aliyun.com/zh/model-studio/cosyvoice-tts-http-api
 - 声音：例如 `longxiaochun_v2`，以百炼控制台 / 文档音色列表为准
 - 输出格式：`mp3` 或 `wav`
 - 风格指令：可选，会发送为百炼 `instruction`，用于控制方言、情感或角色等效果
+
+### 火山 / 豆包 TTS
+
+火山 / 豆包大模型 TTS 使用火山引擎 HTTP v3 语音合成接口，应选择 `volcengine-tts-http` API 形式。
+
+官方资料：https://www.volcengine.com/docs/6561/2528925?lang=zh
+
+- API 格式：`火山 / 豆包 TTS`
+- Base URL：`https://openspeech.bytedance.com`
+- 请求路径：`/api/v3/tts/unidirectional`
+- API key：从火山引擎新控制台获取
+- 模型 / 资源 ID：例如 `seed-tts-2.0`
+- 声音：例如 `zh_female_vv_uranus_bigtts`，以控制台或音色列表为准
+- 输出格式：`mp3`、`wav`、`pcm`、`pcm16`、`opus`；插件会按接口需要把 `opus` 映射为 `ogg_opus`
+- 风格指令：可选，会作为上下文文本发送，用于控制朗读风格
+- 请求方式：建议用 `Node` 或 `Auto`
 
 ## 本地部署
 
