@@ -54,7 +54,7 @@
 
 ### 配置与入口
 
-**模型 → 语音识别 (ASR)**：添加 HTTP 短音频、HTTP 长音频、WebSocket 三类 ASR 端点，并可用短录音测试配置。  
+**模型 → 语音识别（ASR）**：添加 HTTP 短音频、HTTP 长音频、WebSocket 三类 ASR 端点，并可用短录音测试配置。  
 <img src="./docs/assets/voice/config-ASR.png" width="600">
 
 **模型 → 语音生成（TTS）**：添加各类 TTS 端点，也可播放测试。
