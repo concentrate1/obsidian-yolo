@@ -4,6 +4,7 @@ import {
 } from '../snippets/templates'
 
 import {
+  YOLO_OBSIDIAN_CLI_TEMPLATE,
   YOLO_OBSIDIAN_OUTPUT_FORMAT_TEMPLATE,
   YOLO_SKILL_CREATOR_TEMPLATE,
   getSkillsPathAwareTemplate,
@@ -43,6 +44,14 @@ const BUILTIN_SKILLS: BuiltinLiteSkill[] = [
     path: 'builtin://skills/snippet-creator.md',
     content: YOLO_SNIPPET_CREATOR_TEMPLATE,
   },
+  {
+    name: 'obsidian-cli',
+    description:
+      'Drive Obsidian via the official CLI through terminal_command. Use when the user asks for Obsidian CLI, or when native fs_* / js_eval tools cannot cover Obsidian-specific operations (backlinks, properties, daily notes, command palette, plugin reload, tasks/tags, version history, etc.).',
+    mode: 'lazy',
+    path: 'builtin://skills/obsidian-cli.md',
+    content: YOLO_OBSIDIAN_CLI_TEMPLATE,
+  },
 ]
 
 const renderBuiltinContent = (
@@ -58,12 +67,21 @@ const renderBuiltinContent = (
   return skill.content
 }
 
+const renderBuiltinDescription = (
+  skill: BuiltinLiteSkill,
+  snippetsPath?: string,
+): string =>
+  skill.name === 'snippet-creator'
+    ? getSnippetsPathAwareTemplate(skill.description, snippetsPath)
+    : skill.description
+
 export const listBuiltinLiteSkills = (options?: {
   skillsDir?: string
   snippetsPath?: string
 }): BuiltinLiteSkill[] => {
   return BUILTIN_SKILLS.map((skill) => ({
     ...skill,
+    description: renderBuiltinDescription(skill, options?.snippetsPath),
     content: renderBuiltinContent(skill, options),
   }))
 }
@@ -92,6 +110,7 @@ export const getBuiltinLiteSkillByName = ({
 
   return {
     ...matched,
+    description: renderBuiltinDescription(matched, snippetsPath),
     content: renderBuiltinContent(matched, { skillsDir, snippetsPath }),
   }
 }

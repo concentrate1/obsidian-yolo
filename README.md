@@ -7,7 +7,6 @@
 <p align="center">
   <b>非官方构建</b> · <a href="./docs/tutorials/voice/voice-configuration.md">语音配置指南</a> · <a href="./docs/technical/voice-implementation.md">实现说明</a>
 </p>
-
 > [!WARNING]
 > 这是非官方语音版 `concentrate1/obsidian-yolo@yolo-unofficial-dev` ，不是上游 `Lapis0x0/obsidian-yolo` 的官方发布。
 >

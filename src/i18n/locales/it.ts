@@ -1,6 +1,6 @@
-import type { TranslationKeys } from '../types'
+import type { DeepPartial, TranslationKeys } from '../types'
 
-export const it: TranslationKeys = {
+export const it: DeepPartial<TranslationKeys> = {
   commands: {
     openChat: 'Apri chat',
     openChatSidebar: 'Apri chat (barra laterale)',
@@ -30,6 +30,27 @@ export const it: TranslationKeys = {
     stopReadAloud: 'Ferma lettura ad alta voce',
   },
 
+  // Italian does not yet translate the full config-transfer surface. Keep
+  // these newly selectable catalog labels localized while other strings use
+  // their call-site fallbacks.
+  configTransfer: {
+    export: {
+      moduleConfigsUnredactedOnly:
+        'La configurazione dei moduli può contenere credenziali private del modulo ed è esclusa dalle esportazioni oscurate.',
+    },
+    import: {
+      noticePartialModuleConfig:
+        'Le impostazioni Host sono state importate, ma la configurazione dei moduli non è riuscita. Alcune impostazioni dei moduli potrebbero essere state scritte e non sono state annullate.',
+    },
+    keyLabels: {
+      contextVoiceInputOptions: 'Impostazioni vocali',
+      jsSandbox: 'Autorizzazioni sandbox JS',
+      pluginUpdateAutoDownloadEnabled:
+        'Scarica automaticamente gli aggiornamenti del plugin',
+      moduleConfigs: 'Configurazione moduli',
+    },
+  },
+
   common: {
     save: 'Salva',
     cancel: 'Annulla',
@@ -52,6 +73,8 @@ export const it: TranslationKeys = {
     characters: 'caratteri',
     words: 'parole',
     wordsCharacters: 'parole/caratteri',
+    rows: 'righe',
+    columns: 'colonne',
     default: 'Predefinito',
     modelDefault: 'Predefinito del modello',
     on: 'Attivo',
@@ -68,7 +91,16 @@ export const it: TranslationKeys = {
     chatList: {
       searchPlaceholder: 'Cerca conversazioni',
       empty: 'Nessuna conversazione',
+      noTaskConversations: 'Nessuna conversazione di attività',
+      historySections: 'Categorie di conversazioni',
+      myConversations: 'Le mie conversazioni',
+      taskConversations: 'Conversazioni di attività',
+      taskConversationSources: 'Origini delle conversazioni di attività',
+      allSources: 'Tutte',
+      externalAgent: 'Agent esterno',
       current: 'Attuale',
+      pinConversation: 'Fissa',
+      unpinConversation: 'Rimuovi fissaggio',
       retryTitle: 'Riprova titolo',
       archived: 'Archiviate',
       hideArchived: 'Nascondi archiviate',
@@ -150,21 +182,24 @@ export const it: TranslationKeys = {
       knowledge: 'Conoscenza',
       tools: 'Strumenti',
       agent: 'Agent',
+      modules: 'Moduli',
       others: 'Altro',
     },
     supportYolo: {
       name: 'Supporta il progetto',
       desc: 'Se trovi utile questo plugin, considera di supportarne lo sviluppo!',
       buyMeACoffee: 'Offrimi un caffè',
+      reportBug: 'Segnala bug',
+      featureRequest: 'Richiedi funzione',
     },
     defaults: {
       title: 'Criteri modello predefiniti e prompt',
       defaultChatModel: 'Modello chat predefinito',
       defaultChatModelDesc:
         'Scegli il modello che vuoi usare per la chat nella barra laterale.',
-      chatTitleModel: 'Modello per titolo e riepilogo conversazione',
+      chatTitleModel: 'Modello per titolo conversazione',
       chatTitleModelDesc:
-        'Scegli il modello usato per assegnare automaticamente un nome alle conversazioni e generare i riepiloghi compact.',
+        'Scegli il modello usato per assegnare automaticamente un nome alle conversazioni.',
       streamFallbackRecovery: 'Abilita recupero automatico',
       streamFallbackRecoveryDesc:
         'Quando la richiesta primaria in streaming scade o fallisce, esegue un secondo tentativo in modalita non streaming.',
@@ -184,6 +219,100 @@ export const it: TranslationKeys = {
       tabCompletionSystemPrompt: 'Prompt di sistema completamento tab',
       tabCompletionSystemPromptDesc:
         'Messaggio di sistema applicato quando si generano suggerimenti di completamento tab; lascia vuoto per usare quello predefinito incorporato.',
+    },
+    modules: {
+      title: 'Moduli',
+      description:
+        'Visualizza le funzionalità opzionali di Yolo e il loro stato corrente.',
+      manage: 'Gestisci moduli',
+      manageDescription:
+        'Installa le funzionalità YOLO e verifica che siano pronte per l’uso.',
+      navigation: 'Navigazione impostazioni moduli',
+      enabled: 'Attivi',
+      enabledEmpty: 'Nessun modulo attivo.',
+      disabled: 'Disattivati',
+      disabledEmpty: 'Nessun modulo disattivato.',
+      settings: 'Impostazioni',
+      updateAndEnable: 'Aggiorna e attiva',
+      loading: 'Caricamento moduli…',
+      loadError: 'Impossibile caricare i moduli.',
+      settingsSaveError: 'Impossibile salvare le impostazioni del modulo',
+      catalogError: 'Catalogo: {error}',
+      installedError: 'Moduli installati: {error}',
+      intentError: 'Intento del modulo: {error}',
+      empty: 'Nessun modulo trovato.',
+      installed: 'Installati',
+      installedDescription: 'Moduli presenti in questa installazione.',
+      installedEmpty: 'Nessun modulo installato.',
+      available: 'Disponibili',
+      availableDescription:
+        'Moduli disponibili per questa installazione di Yolo.',
+      availableEmpty: 'Nessun altro modulo disponibile.',
+      version: 'Versione {version}',
+      availableVersion: 'Aggiornamento {version}',
+      install: 'Installa',
+      update: 'Aggiorna',
+      installing: 'Installazione…',
+      updating: 'Aggiornamento…',
+      reload: 'Riprova',
+      reloading: 'Nuovo tentativo…',
+      candidateUnavailable:
+        'Al momento non è possibile installare {name}. Il download potrebbe essere già in corso oppure il catalogo potrebbe essere cambiato.',
+      installError: 'Impossibile installare {name}: {error}',
+      updateError: 'Impossibile aggiornare {name}: {error}',
+      activationPendingDetail:
+        'La versione {version} è pronta e può essere attivata di nuovo.',
+      intentLabel: 'Intento',
+      intentUnknown: 'Non disponibile',
+      intentInstalledEnabled: 'Installato · abilitato',
+      intentInstalledDisabled: 'Installato · disabilitato',
+      intentUninstalled: 'Non installato',
+      readinessLabel: 'Disponibilità',
+      readiness: {
+        notInstalled: 'Non installato',
+        pending: 'In attesa o da riprovare',
+        ready: 'Pronto su questo dispositivo',
+        failed: 'Non riuscito',
+      },
+      incompatibleReason: 'Non compatibile: {reason}',
+      compatibility: {
+        platform: 'piattaforma',
+        hostApi: 'aggiorna YOLO Core',
+        dataSchema: 'schema dei dati',
+      },
+      retry: 'Riprova',
+      actionError: 'Impossibile modificare {name}: {error}',
+      failure: {
+        downloadTimeout:
+          'Il download del modulo è scaduto sia su Cloudflare sia su GitHub. Controlla la rete o il proxy e riprova.',
+        download:
+          'Impossibile scaricare il modulo da Cloudflare o GitHub. Controlla la rete o il proxy e riprova.',
+        integrity:
+          'Il modulo scaricato non ha superato il controllo di integrità, quindi l’installazione è stata interrotta. Riprova e contatta lo sviluppatore se il problema persiste.',
+        activation:
+          'Il modulo è stato scaricato ma non può essere avviato. Riprova e contatta lo sviluppatore se il problema persiste.',
+        unknown: 'Operazione del modulo non riuscita.',
+        diagnostic: 'Dettagli: {detail}',
+      },
+      actions: {
+        install: 'Installa',
+        installBusy: 'Installazione…',
+        enable: 'Abilita',
+        enableBusy: 'Abilitazione…',
+        disable: 'Disabilita',
+        disableBusy: 'Disabilitazione…',
+        uninstall: 'Disinstalla',
+        uninstallBusy: 'Disinstallazione…',
+      },
+      statuses: {
+        available: 'Disponibile',
+        installed: 'Installato',
+        active: 'Attivo',
+        disabled: 'Disabilitato',
+        updateAvailable: 'Aggiornamento disponibile',
+        activationPending: 'Attivazione in attesa',
+        failed: 'Non riuscito',
+      },
     },
     smartSpace: {
       quickActionsTitle: 'Azioni rapide smart space',
@@ -321,6 +450,8 @@ export const it: TranslationKeys = {
       tools: 'Strumenti',
       toolsCount: '{count} strumenti',
       toolsCountWithEnabled: '{count} strumenti (abilitati {enabled})',
+      mcpLoadingStatus: 'Caricamento di {count} MCP…',
+      mcpErrorStatus: '{count} MCP non connessi',
       skills: 'Competenze',
       skillsCount: '{count} competenze',
       skillsCountWithEnabled: '{count} competenze (abilitate {enabled})',
@@ -330,6 +461,23 @@ export const it: TranslationKeys = {
       yoloBaseDirDesc:
         'Inserisci un percorso relativo al vault (senza / iniziale). Esempio: YOLO nella radice del vault, oppure setting/YOLO nella cartella setting.',
       yoloBaseDirPlaceholder: 'YOLO',
+      yoloBaseDirHiddenPath:
+        'La cartella base YOLO non può usare cartelle nascoste. Rimuovi il punto iniziale dal nome, ad esempio cambia .yolo in yolo.',
+      yoloBaseDirVoiceBusy:
+        'Completa l’attività vocale corrente prima di cambiare la cartella base YOLO.',
+      yoloBaseDirMigrated:
+        'La cartella base YOLO ora usa {target}, che Obsidian può indicizzare.',
+      yoloBaseDirMigrationConflict:
+        'La cartella base YOLO non è stata spostata perché {target} esiste già. Le impostazioni esistenti sono state mantenute.',
+      yoloBaseDirMigrationFailed:
+        'Impossibile migrare la cartella base YOLO. Le impostazioni esistenti sono state mantenute.',
+      yoloBaseDirMigrationRollbackFailed:
+        'YOLO è stato spostato da {source} a {target}, ma non è stato possibile aggiornare le impostazioni né annullare lo spostamento. Sposta manualmente la cartella in {source} prima di continuare.',
+      yoloBaseDirMigrationManualRepair:
+        'La cartella base YOLO {source} è nascosta ma non può essere migrata automaticamente in sicurezza. Scegli una cartella visibile e sposta manualmente i file YOLO.',
+      yoloBaseDirConflictTitle: 'La cartella base YOLO non è stata spostata',
+      yoloBaseDirConflictMessage:
+        '{target} esiste già e contiene file. Nessun contenuto è stato spostato per evitare sovrascritture o fusioni. Scegli una cartella vuota o inesistente.',
       skillsSourcePath:
         'Origine: skill integrate + {path}/*.md + {path}/**/SKILL.md',
       refreshSkills: 'Aggiorna',
@@ -425,7 +573,8 @@ export const it: TranslationKeys = {
       builtinFsSearchLabel: 'Cerca nel vault',
       builtinFsSearchDesc: 'Cerca file e contenuti nel vault',
       builtinFsReadLabel: 'Leggi',
-      builtinFsReadDesc: 'Leggi file del vault',
+      builtinFsReadDesc:
+        'Leggi file del vault, skill o pagine web aperte (browser://)',
       builtinContextPruneToolResultsLabel: 'Pota risultati strumenti',
       builtinContextPruneToolResultsDesc:
         'Escludi i risultati storici degli strumenti dal contesto futuro. Nota: questo strumento può invalidare la cache del prompt e aumentare il costo delle richieste.',
@@ -443,8 +592,11 @@ export const it: TranslationKeys = {
       fsEditReviewToggle: 'Richiedi approvazione prima di modificare i file',
       fsEditReviewToggleDesc:
         "Se abilitato, le modifiche fs_edit dell'agent aprono la revisione inline/apply prima di scrivere il file.",
-      builtinFsFileOpsLabel: 'Set operazioni file',
-      builtinFsFileOpsDesc: 'Scrivi, elimina e sposta file e cartelle',
+      builtinFsEditOpsLabel: 'Set modifica file',
+      builtinFsEditOpsDesc:
+        'Modifica testo mirato o scrive il contenuto completo del file',
+      builtinFsFileOpsLabel: 'Set operazioni percorsi',
+      builtinFsFileOpsDesc: 'Elimina o sposta file e cartelle, e crea cartelle',
       builtinMemoryOpsLabel: 'Set strumenti memoria',
       builtinMemoryOpsDesc: 'Aggiungi, aggiorna ed elimina memoria',
       builtinMemoryAddLabel: 'Aggiungi memoria',
@@ -524,8 +676,10 @@ export const it: TranslationKeys = {
       toolApproval: 'Approvazione',
       toolApprovalFullAccess: 'Accesso completo',
       toolApprovalRequire: 'Richiedi approvazione',
-      toolApprovalForced: 'Approvazione richiesta',
+      toolDisclosureAuto: 'Auto',
+      toolDisclosureAutoSelect: 'Selezione automatica',
       toolDisclosureAlways: 'In contesto',
+      toolDisclosureMixed: 'Misto',
       toolDisclosureOnDemand: 'Su richiesta',
       editorEnabled: 'Abilitato',
       editorDisabled: 'Disabilitato',
@@ -546,7 +700,7 @@ export const it: TranslationKeys = {
       agentCapabilitiesBlockTitle: 'Capacità Agent',
       focusSyncTitle: 'Sincronizzazione del focus',
       focusSyncDesc:
-        "Se abilitato, l'AI percepisce quale file stai leggendo e dove ti trovi.",
+        "Se abilitato, l'AI percepisce dove ti trovi nella nota, nel PDF o nella pagina web che stai visualizzando. Il contenuto completo della pagina web si legge con fs_read tramite un percorso browser://.",
       timeContextTitle: 'Consapevolezza dell ora corrente',
       timeContextDesc:
         'Indica al modello l ora corrente all invio di ogni messaggio.',
@@ -577,6 +731,16 @@ export const it: TranslationKeys = {
         'Uso finestra di contesto (%)',
       autoContextCompactionThresholdRatioPercentDesc:
         'Attiva quando prompt_tokens diviso per la finestra massima del modello di chat raggiunge questa percentuale. Richiede max context sul modello.',
+      mcpServerBlockTitle: 'Accesso per agenti esterni',
+      mcpServerEnabled: 'Consenti accesso agli agenti esterni',
+      mcpServerDesc:
+        'Consenti agli agenti esterni di cercare nel Vault tramite MCP e delegare attivita agli agenti YOLO configurati.',
+      mcpServerDesktopOnly: 'Il servizio MCP e disponibile solo su desktop.',
+      mcpServerClientConfig: 'Configurazione connessione MCP',
+      mcpServerCopyConfig: 'Copia',
+      mcpServerError: 'Avvio non riuscito',
+      mcpServerConfigCopied: 'Configurazione MCP copiata.',
+      mcpServerCopyFailed: 'Impossibile copiare la configurazione MCP.',
     },
     terminalCommand: {
       openSettings: 'Configura comando terminale',
@@ -663,7 +827,7 @@ export const it: TranslationKeys = {
       pickerTitle: 'Aggiungi provider',
       pickerSearchPlaceholder: 'Cerca provider · premi Invio',
       pickerCustomLabel: 'Provider personalizzato',
-      pickerCustomDesc: 'Inserisci manualmente base URL e API key',
+      pickerCustomDesc: 'URL base + chiave API',
       pickerEmpty: 'Nessun provider corrispondente',
       categoryAll: 'Tutti',
       categoryMain: 'Internazionale',
@@ -701,6 +865,7 @@ export const it: TranslationKeys = {
       baseUrl: 'URL base',
       baseUrlDesc: 'URL endpoint API personalizzato (facoltativo).',
       baseUrlPlaceholder: 'Ad esempio, https://api.openai.com/v1',
+      apiUrlPreviewLabel: 'Anteprima:',
       noStainlessHeaders: 'Nessun header stainless',
       noStainlessHeadersDesc:
         'Disabilita gli header SDK stainless (richiesto per alcuni provider compatibili).',
@@ -714,6 +879,12 @@ export const it: TranslationKeys = {
       requestTransportModeBrowser: 'Richiesta browser',
       requestTransportModeObsidian: 'Richiesta integrata Obsidian',
       requestTransportModeNode: 'Connessione diretta desktop (consigliata)',
+      responseStreamingMode: 'Modalita streaming risposta',
+      responseStreamingModeDesc:
+        'Controlla se questo provider usa risposte streaming o non streaming.',
+      responseStreamingModeAuto: 'Auto (predefinito)',
+      responseStreamingModeStreaming: 'Streaming',
+      responseStreamingModeNonStreaming: 'Non streaming',
       promptCaching: 'Cache del prompt',
       promptCachingDesc:
         "Abilita la cache effimera dei prompt Anthropic. Riutilizza prompt di sistema, strumenti e cronologia tra i turni per ridurre i token di input. Le scritture in cache hanno un sovrapprezzo del 25%; le letture costano circa il 10% del normale. Disponibile quando il tipo API del provider è Anthropic; l'upstream deve supportare il campo cache_control.",
@@ -749,17 +920,6 @@ export const it: TranslationKeys = {
       geminiOAuthProject: 'progetto',
       geminiOAuthStreamingNotice:
         'Gemini OAuth supporta lo streaming. Con Obsidian requestUrl la risposta viene bufferizzata, mentre il fetch Node desktop puo trasmetterla in tempo reale.',
-      qwenOAuthTitle: 'Qwen OAuth',
-      qwenOAuthConnect: 'Connetti',
-      qwenOAuthDisconnect: 'Disconnetti',
-      qwenOAuthConnecting: 'Connessione in corso...',
-      qwenOAuthLoadingStatus: 'Caricamento stato Qwen OAuth...',
-      qwenOAuthConnected: 'Connesso',
-      qwenOAuthExpires: 'scade',
-      qwenOAuthDisconnectedHelp:
-        'Non connesso. Connettiti per usare i modelli del tuo account Qwen.',
-      qwenOAuthStreamingNotice:
-        'Qwen OAuth supporta lo streaming. Con Obsidian requestUrl la risposta viene bufferizzata, mentre il fetch Node desktop puo trasmetterla in tempo reale.',
     },
     tts: {
       title: 'Generazione vocale (TTS)',
@@ -1268,7 +1428,7 @@ export const it: TranslationKeys = {
       snippets: {
         sectionTitle: 'Snippet',
         sectionDesc:
-          "Digita / nell'input della chat e scegli uno snippet per inserire un prompt predefinito. Gli snippet sono in YOLO/snippets.md.",
+          "Digita / nell'input della chat e scegli uno snippet per inserire un prompt predefinito. Gli snippet sono in {{path}}.",
         cardName: 'Libreria snippet',
         cardDescCount: '{count} snippet',
         cardDescMissing: 'Nessun file snippets.md',
@@ -1276,7 +1436,7 @@ export const it: TranslationKeys = {
         initBtn: 'Inizializza snippet',
         modalTitle: 'Gestisci snippet',
         modalCallout:
-          "Gli snippet sono in YOLO/snippets.md. Attiva l'input della chat con / e selezionane uno per inserire il corpo.",
+          "Gli snippet sono in {{path}}. Attiva l'input della chat con / e selezionane uno per inserire il corpo.",
         openFileBtn: 'Apri snippets.md',
         createFileBtn: 'Crea snippets.md',
         empty: 'Nessuno snippet',
@@ -1413,6 +1573,11 @@ export const it: TranslationKeys = {
     },
     etc: {
       title: 'Altro',
+      pluginAutoUpdate: 'Scarica aggiornamenti automaticamente',
+      pluginAutoUpdateDesc:
+        'Se attivo, le nuove versioni rilevate vengono scaricate automaticamente in background.',
+      pluginAutoUpdateDescUnavailable:
+        'Gli aggiornamenti dei moduli vengono scaricati automaticamente; l’installazione del Core con un clic richiede ancora desktop e una cartella plugin scrivibile.',
       resetSettings: 'Ripristina impostazioni',
       resetSettingsDesc:
         'Ripristina tutte le impostazioni ai valori predefiniti.',
@@ -1459,6 +1624,23 @@ export const it: TranslationKeys = {
       yoloBaseDirDesc:
         'Inserisci un percorso relativo al vault (senza / iniziale). Esempio: YOLO nella radice del vault, oppure setting/YOLO nella cartella setting. Directory skill attuale: {path}.',
       yoloBaseDirPlaceholder: 'YOLO',
+      yoloBaseDirHiddenPath:
+        'La cartella base YOLO non può usare cartelle nascoste. Rimuovi il punto iniziale dal nome, ad esempio cambia .yolo in yolo.',
+      yoloBaseDirInvalidPath:
+        'La cartella base YOLO contiene un nome non supportato su tutti i dispositivi. Evita caratteri di controllo, nomi riservati di Windows e i caratteri <>:"\\|?*.',
+      yoloBaseDirMigrated:
+        'La cartella base YOLO ora usa {target}, che Obsidian può indicizzare.',
+      yoloBaseDirMigrationConflict:
+        'La cartella base YOLO non è stata spostata perché {target} esiste già. Le impostazioni esistenti sono state mantenute.',
+      yoloBaseDirMigrationFailed:
+        'Impossibile migrare la cartella base YOLO. Le impostazioni esistenti sono state mantenute.',
+      yoloBaseDirMigrationRollbackFailed:
+        'YOLO è stato spostato da {source} a {target}, ma non è stato possibile aggiornare le impostazioni né annullare lo spostamento. Sposta manualmente la cartella in {source} prima di continuare.',
+      yoloBaseDirMigrationManualRepair:
+        'La cartella base YOLO {source} è nascosta ma non può essere migrata automaticamente in sicurezza. Scegli una cartella visibile e sposta manualmente i file YOLO.',
+      yoloBaseDirConflictTitle: 'La cartella base YOLO non è stata spostata',
+      yoloBaseDirConflictMessage:
+        '{target} esiste già e contiene file. Nessun contenuto è stato spostato per evitare sovrascritture o fusioni. Scegli una cartella vuota o inesistente.',
       ribbonClickAction: 'Icona ribbon apre la chat in',
       ribbonClickActionDesc:
         'Dove l’icona ribbon di YOLO apre la vista Chat. Se nella posizione scelta esiste già una chat viene attivata; altrimenti ne viene creata una nuova.',
@@ -1517,6 +1699,10 @@ export const it: TranslationKeys = {
 
   voiceInput: {
     buttonCancel: 'Annulla input vocale',
+    managedPathTransitionNotice:
+      'I file YOLO sono in fase di spostamento. Riprova al termine dello spostamento.',
+    managedPathWriteTimeoutNotice:
+      'I file vocali sono ancora in fase di salvataggio, quindi la cartella principale YOLO non è stata modificata. Riprova al termine del salvataggio.',
     modeSwitchToHold: 'Passa a premi-per-parlare',
     modeSwitchToAudioFile: 'Passa alla modalita file audio',
     modeSwitchToReadAloud: 'Passa alla lettura ad alta voce',
@@ -1600,8 +1786,6 @@ export const it: TranslationKeys = {
     newChat: 'Nuova chat',
     untitledConversation: 'Nuova chat',
     continueResponse: 'Continua risposta',
-    loadEarlierMessages: 'Caricamento messaggi precedenti',
-    loadNewerMessages: 'Caricamento messaggi più recenti',
     messageNavigator: {
       title: 'Navigatore messaggi',
       itemAriaLabel: 'Vai al messaggio {index}: {label}',
@@ -1643,8 +1827,14 @@ export const it: TranslationKeys = {
     selectModel: 'Seleziona modello',
     uploadImage: 'Carica immagine',
     uploadFile: 'Aggiungi file',
+    dropFilesHint: 'Rilascia per aggiungere file',
     imageUnsupportedByModel:
       'Questo modello non dichiara il supporto alle immagini. Abilita la modalità di input "Vision" nelle impostazioni del modello per allegare immagini.',
+    unsupportedFileType: 'Tipo di file non supportato: {names}',
+    processImagesFailed: 'Impossibile elaborare le immagini caricate',
+    readPdfFailed: 'Impossibile leggere il PDF "{name}": {error}',
+    readOfficeFailed: 'Failed to read Office document "{name}": {error}',
+    readTextAttachmentFailed: 'Failed to read text file "{name}": {error}',
     addContext: 'Aggiungi contesto',
     applyChanges: 'Applica modifiche',
     copyMessage: 'Copia messaggio',
@@ -1684,6 +1874,7 @@ export const it: TranslationKeys = {
       createSnippetsFile: 'Clicca per creare snippets.md',
     },
     emptyState: {
+      workspaceTitle: 'Cosa vuoi fare oggi in {vaultName}?',
       askTitle: 'Pensa prima, poi scrivi',
       askDescription:
         "Ideale per domande, revisione e riscrittura, con focus sull'espressione.",
@@ -1693,9 +1884,16 @@ export const it: TranslationKeys = {
       agentTitle: "Lascia eseguire all'AI",
       agentDescription:
         'Abilita gli strumenti per ricerca, lettura/scrittura e task multi-step.',
-      agentFullTitle: "Lascia eseguire all'AI · Full Access",
+      agentFullTitle: "Lascia eseguire all'AI · Modalità YOLO",
       agentFullDescription:
-        'Abilita gli strumenti per ricerca, lettura/scrittura e task multi-step.',
+        'Approva automaticamente gli strumenti per ricerca, lettura/scrittura e task multi-step.',
+    },
+    quickAccess: {
+      manage: 'Gestisci accessi rapidi',
+      searchPlaceholder: 'Cerca skill o comandi rapidi',
+      skills: 'Skill',
+      snippets: 'Comandi rapidi',
+      empty: 'Nessun risultato',
     },
     compaction: {
       pendingTitle: 'Compattazione del contesto in corso',
@@ -1848,6 +2046,23 @@ export const it: TranslationKeys = {
     },
     errorCard: {
       title: 'Questa risposta non e stata generata',
+      responseFormat: {
+        responseNotObject:
+          'Il servizio modello ha restituito una risposta che non e un oggetto (valore effettivo: {{actual}}).',
+        missingChoices:
+          'Il servizio modello ha restituito un formato non analizzabile: array choices mancante.',
+        invalidChoices:
+          'Il servizio modello ha restituito un formato non analizzabile: choices non e un array (valore effettivo: {{actual}}).',
+        stage: 'Fase: {{stage}}',
+        expected: 'Campo atteso: {{field}}',
+        expectedChoicesArray: 'array choices',
+        responseFields: 'Campi risposta: {{fields}}',
+        upstreamError: 'Errore upstream: {{message}}',
+        errorType: 'Tipo errore: {{type}}',
+        errorCode: 'Codice errore: {{code}}',
+        upstreamMessage: 'Messaggio upstream: {{message}}',
+        responsePreview: 'Anteprima risposta: {{preview}}',
+      },
     },
     showMore: 'Mostra altro',
     showLess: 'Mostra meno',
@@ -1867,7 +2082,8 @@ export const it: TranslationKeys = {
         fs_search: 'Cerca nel vault',
         fs_read: 'Leggi file',
         fs_edit: 'Modifica testo',
-        fs_file_ops: 'Set operazioni file',
+        fs_edit_ops: 'Set modifica file',
+        fs_file_ops: 'Set operazioni percorsi',
         memory_add: 'Aggiungi memoria',
         memory_update: 'Aggiorna memoria',
         memory_delete: 'Elimina memoria',
@@ -1899,6 +2115,7 @@ export const it: TranslationKeys = {
       noParameters: 'Nessun parametro',
       result: 'Risultato',
       error: 'Errore',
+      rejectionReason: 'Motivo del rifiuto',
       allow: 'Consenti',
       reject: 'Rifiuta',
       abort: 'Interrompi',
@@ -1940,6 +2157,15 @@ export const it: TranslationKeys = {
       statusFailed: 'Fallito',
       toolUseCount: '{count} strumenti',
       tokenCount: '{count} token',
+      approval: {
+        heading: 'In attesa di approvazione',
+        headingMulti: 'In attesa di approvazione · {count}',
+        approve: 'Approva',
+        reject: 'Rifiuta',
+        approveAll: 'Approva tutto',
+        rejectAll: 'Rifiuta tutto',
+        viewDetails: 'Vedi parametri',
+      },
     },
     conversationSettings: {
       openAria: 'Impostazioni conversazione',
@@ -2016,11 +2242,8 @@ export const it: TranslationKeys = {
     agentStatusRunning: 'In esecuzione',
     agentStatusWaitingApproval: 'In attesa di approvazione',
     agentStatusFallbackConversationTitle: 'Conversazione in esecuzione',
-    backgroundStatusAriaLabel:
-      'Stato delle attivita in background, clicca per vedere i dettagli',
-    backgroundStatusPanelTitle: 'Attivita in background',
-    backgroundStatusPanelEmpty:
-      'Non ci sono attivita in background in esecuzione',
+    backgroundStatusPanelTitle: 'Attivita e promemoria',
+    backgroundStatusPanelEmpty: 'Non ci sono attivita o promemoria',
     backgroundTasksRunning:
       'Al momento ci sono {count} attivita in background in esecuzione',
     backgroundTasksNeedAttention:
@@ -2113,26 +2336,16 @@ export const it: TranslationKeys = {
     rewriteDesc: 'Modifica solo la selezione corrente',
     agent: 'Agent',
     agentDesc: 'Strumenti per task complessi',
-    agentFull: 'Agent (accesso completo)',
-    agentFullDesc: 'Approva automaticamente tutte le chiamate agli strumenti',
-    warning: {
-      title: 'Conferma prima di abilitare la modalita Agent',
-      description:
-        "L'Agent puo invocare strumenti automaticamente. Prima di continuare, leggi i seguenti rischi:",
-      permission:
-        'Controlla rigorosamente i permessi di chiamata degli strumenti e concedi solo quelli necessari.',
-      cost: "Le attivita dell'Agent possono consumare molte risorse del modello e comportare costi piu elevati.",
-      backup:
-        'Esegui un backup dei contenuti importanti in anticipo per evitare modifiche indesiderate.',
-      checkbox:
-        'Ho compreso i rischi sopra indicati e accetto la responsabilita di procedere',
-      cancel: 'Annulla',
-      confirm: 'Continua e abilita Agent',
-    },
+    agentFull: 'Agent (YOLO)',
+    agentFullDesc:
+      'Approva automaticamente le chiamate agli strumenti per task complessi',
+    yolo: 'YOLO',
+    yoloDesc:
+      'Approva automaticamente le chiamate agli strumenti per task complessi',
     fullAccessWarning: {
-      title: "Conferma prima di abilitare l'accesso completo",
+      title: 'Conferma prima di abilitare la Modalità YOLO',
       description:
-        "L'accesso completo approva automaticamente tutte le chiamate agli strumenti, incluse modifiche ai file e comandi terminal. Prima di continuare, leggi i seguenti rischi:",
+        'La Modalità YOLO approva automaticamente tutte le chiamate agli strumenti, incluse modifiche ai file e comandi terminal. Prima di continuare, leggi i seguenti rischi:',
       permission:
         'Gli strumenti vengono eseguiti senza approvazione per chiamata. I prefissi di comandi pericolosi restano bloccati.',
       cost: 'Le esecuzioni autonome possono consumare molte risorse del modello e comportare costi piu elevati.',
@@ -2141,7 +2354,7 @@ export const it: TranslationKeys = {
       checkbox:
         'Ho compreso i rischi sopra indicati e accetto la responsabilita di procedere',
       cancel: 'Annulla',
-      confirm: 'Continua con accesso completo',
+      confirm: 'Continua con Modalità YOLO',
     },
   },
 
@@ -2150,19 +2363,21 @@ export const it: TranslationKeys = {
     effort: 'Sforzo',
     faster: 'Più veloce',
     smarter: 'Più intelligente',
-    off: 'Disattivato',
-    on: 'Attivato',
+    off: 'Off',
+    on: 'On',
     auto: 'Auto',
-    low: 'Basso',
-    medium: 'Medio',
-    high: 'Alto',
-    extraHigh: 'Extra alto',
+    low: 'Low',
+    medium: 'Medium',
+    high: 'High',
+    xhigh: 'XHigh',
+    max: 'Max',
     offDesc: 'Nessun ragionamento, risponde direttamente',
     autoDesc: 'Il modello decide la profondità del ragionamento',
     lowDesc: 'Ragionamento leggero, risposta più rapida',
     mediumDesc: 'Profondità di ragionamento bilanciata',
     highDesc: 'Ragionamento approfondito, per problemi complessi',
-    extraHighDesc: 'Ragionamento massimo, per i casi più difficili',
+    xhighDesc: 'Ragionamento esteso per le attività più impegnative',
+    maxDesc: 'Ragionamento massimo per le attività più impegnative',
   },
 
   update: {
@@ -2174,8 +2389,8 @@ export const it: TranslationKeys = {
     dismiss: 'Chiudi',
     languageEnglish: 'EN',
     languageChinese: '中文',
-    muteThisVersion: 'Non notificare per questa versione',
     viewHistory: 'Visualizza cronologia aggiornamenti',
+    skipVersion: 'Non ricordarmelo per questa versione',
     historyTitle: 'Cronologia aggiornamenti',
     historyLoading: 'Caricamento cronologia aggiornamenti...',
     historyError:
@@ -2186,8 +2401,23 @@ export const it: TranslationKeys = {
     historyNext: 'Successiva',
     installationIncompleteTitle: 'Installazione del plugin incompleta',
     installationIncompleteMeta:
-      'main.js {bakedVersion} · manifest {manifestVersion}',
+      'main.js {mainVersion} · manifest {manifestVersion} · styles {stylesVersion}',
+    installationIncompleteSuspects: 'File da riparare: {files}',
     installationIncompleteNotes:
-      'Di solito main.js non è stato scaricato completamente durante l’aggiornamento. Esegui il backup di data.json, rimuovi il plugin e reinstallalo.',
+      'I file del plugin potrebbero non essere stati scaricati completamente. La riparazione parte automaticamente; puoi anche riprovare qui sotto.',
+    tryRepair: 'Prova a riparare',
+    repairing: 'Riparazione {{progress}}%',
+    repairAndReload: 'Ripara e ricarica',
+    downloadUpdate: 'Scarica aggiornamento',
+    downloading: 'Download {{progress}}%',
+    backgroundDownloading: 'Download in background…',
+    installAndReload: 'Installa e ricarica',
+    applying: 'Installazione…',
+    downloadFailed: 'Download non riuscito',
+    installFailed: 'Installazione non riuscita',
+    viewOnGitHub: 'Vedi su GitHub',
+    updateInCommunityPlugins: 'Aggiorna dai plugin community',
+    manualInstallOnGitHub:
+      'Non riesci ad aggiornare? Installa manualmente da GitHub',
   },
 }

@@ -54,6 +54,8 @@ export const zh: TranslationKeys = {
     characters: '字符',
     words: '词',
     wordsCharacters: '词/字',
+    rows: '行',
+    columns: '列',
     default: '默认',
     modelDefault: '模型默认',
     on: '开',
@@ -71,7 +73,16 @@ export const zh: TranslationKeys = {
     chatList: {
       searchPlaceholder: '搜索聊天记录',
       empty: '暂无聊天记录',
+      noTaskConversations: '暂无任务会话',
+      historySections: '会话分类',
+      myConversations: '我的对话',
+      taskConversations: '任务会话',
+      taskConversationSources: '任务会话来源',
+      allSources: '全部',
+      externalAgent: '外部 Agent',
       current: '当前',
+      pinConversation: '置顶',
+      unpinConversation: '取消置顶',
       retryTitle: '重试命名',
       archived: '已归档',
       hideArchived: '收起归档',
@@ -129,19 +140,22 @@ export const zh: TranslationKeys = {
       knowledge: '知识库',
       tools: '工具',
       agent: 'Agent',
+      modules: '模块',
       others: '其他',
     },
     supportYolo: {
       name: '支持 YOLO',
       desc: '如果你觉得 YOLO 有价值，请考虑支持它的开发！',
       buyMeACoffee: '爱发电',
+      reportBug: '报 Bug',
+      featureRequest: '提需求',
     },
     defaults: {
       title: '默认模型策略与提示词',
       defaultChatModel: '默认聊天模型',
       defaultChatModelDesc: '选择你想用于侧边栏聊天的模型。',
-      chatTitleModel: '对话命名与摘要模型',
-      chatTitleModelDesc: '选择用于自动对话命名和 compact 摘要的模型。',
+      chatTitleModel: '对话命名模型',
+      chatTitleModelDesc: '选择用于自动对话命名的模型。',
       streamFallbackRecovery: '启用自动恢复',
       streamFallbackRecoveryDesc:
         '当流式主请求超时或失败时，自动改用非流式再尝试一次。',
@@ -158,6 +172,96 @@ export const zh: TranslationKeys = {
       tabCompletionSystemPrompt: 'Tab 补全系统提示词',
       tabCompletionSystemPromptDesc:
         '生成 Tab 补全建议时使用的系统提示词。留空则使用内置默认值。',
+    },
+    modules: {
+      title: '模块',
+      description: '查看可选的 YOLO 功能及其当前运行状态。',
+      manage: '管理模块',
+      manageDescription: '安装 YOLO 能力，并检查它们是否可以正常使用。',
+      navigation: '模块设置导航',
+      enabled: '已启用',
+      enabledEmpty: '暂无已启用模块。',
+      disabled: '已停用',
+      disabledEmpty: '暂无已停用模块。',
+      settings: '设置',
+      updateAndEnable: '更新并启用',
+      loading: '正在加载模块…',
+      loadError: '无法加载模块。',
+      settingsSaveError: '无法保存模块设置',
+      catalogError: '模块目录：{error}',
+      installedError: '已安装模块：{error}',
+      intentError: '模块意图：{error}',
+      empty: '未找到模块。',
+      installed: '已安装',
+      installedDescription: '当前安装中已有的模块。',
+      installedEmpty: '尚未安装任何模块。',
+      available: '可用',
+      availableDescription: '可用于此 YOLO 安装的模块。',
+      availableEmpty: '没有其他可用模块。',
+      version: '版本 {version}',
+      availableVersion: '可更新至 {version}',
+      install: '安装',
+      update: '更新',
+      installing: '正在安装…',
+      updating: '正在更新…',
+      reload: '重试',
+      reloading: '正在重试…',
+      candidateUnavailable:
+        '目前无法安装 {name}。它可能正在下载，或模块目录已经发生变化。',
+      installError: '无法安装 {name}：{error}',
+      updateError: '无法更新 {name}：{error}',
+      activationPendingDetail: '版本 {version} 已准备完成，可以重试激活。',
+      intentLabel: '操作意图',
+      intentUnknown: '不可用',
+      intentInstalledEnabled: '已安装 · 启用',
+      intentInstalledDisabled: '已安装 · 停用',
+      intentUninstalled: '不安装',
+      readinessLabel: '本机就绪状态',
+      readiness: {
+        notInstalled: '未安装',
+        pending: '等待完成或需要重试',
+        ready: '本机已就绪',
+        failed: '失败',
+      },
+      incompatibleReason: '不兼容：{reason}',
+      compatibility: {
+        platform: '平台',
+        hostApi: '需要更新 YOLO Core',
+        dataSchema: '数据架构',
+      },
+      retry: '重试',
+      actionError: '无法更改 {name}：{error}',
+      failure: {
+        downloadTimeout:
+          'Cloudflare 和 GitHub 均连接超时，无法下载模块。请检查网络或代理设置后重试。',
+        download:
+          '无法从 Cloudflare 或 GitHub 下载模块。请检查网络或代理设置后重试。',
+        integrity:
+          '下载的模块文件未通过完整性校验，已停止安装。请重试；若问题持续，请联系开发者。',
+        activation:
+          '模块已经下载，但无法启动。请重试；若问题持续，请联系开发者。',
+        unknown: '模块操作失败。',
+        diagnostic: '诊断信息：{detail}',
+      },
+      actions: {
+        install: '安装',
+        installBusy: '正在安装…',
+        enable: '启用',
+        enableBusy: '正在启用…',
+        disable: '停用',
+        disableBusy: '正在停用…',
+        uninstall: '卸载',
+        uninstallBusy: '正在卸载…',
+      },
+      statuses: {
+        available: '可用',
+        installed: '已安装',
+        active: '已启用',
+        disabled: '已停用',
+        updateAvailable: '有可用更新',
+        activationPending: '等待激活',
+        failed: '失败',
+      },
     },
     smartSpace: {
       quickActionsTitle: 'Smart Space 快捷选项',
@@ -288,6 +392,8 @@ export const zh: TranslationKeys = {
       tools: '工具',
       toolsCount: '{count} 个工具',
       toolsCountWithEnabled: '{count} 个工具（已启用 {enabled} 个）',
+      mcpLoadingStatus: '正在加载 {count} 个 MCP…',
+      mcpErrorStatus: '{count} 个 MCP 连接失败',
       skills: '技能',
       skillsCount: '{count} 个技能',
       skillsCountWithEnabled: '{count} 个技能（已启用 {enabled} 个）',
@@ -297,6 +403,21 @@ export const zh: TranslationKeys = {
       yoloBaseDirDesc:
         '填写库内相对路径（不要以 / 开头）。例如：放在库根目录填 YOLO；放在 setting 文件夹下填 setting/YOLO。',
       yoloBaseDirPlaceholder: 'YOLO',
+      yoloBaseDirHiddenPath:
+        'YOLO 根目录不能使用隐藏文件夹。请移除文件夹名称开头的“.”，例如将 .yolo 改为 yolo。',
+      yoloBaseDirVoiceBusy: '请先完成当前语音任务，再更改 YOLO 根目录。',
+      yoloBaseDirMigrated:
+        'YOLO 根目录现已使用 {target}，Obsidian 可以正常索引它。',
+      yoloBaseDirMigrationConflict:
+        'YOLO 根目录未移动，因为 {target} 已存在；已保留原有设置。',
+      yoloBaseDirMigrationFailed: 'YOLO 根目录迁移失败；已保留原有设置。',
+      yoloBaseDirMigrationRollbackFailed:
+        'YOLO 已从 {source} 移动到 {target}，但设置更新失败且无法回滚。请先手动将目录移回 {source}。',
+      yoloBaseDirMigrationManualRepair:
+        'YOLO 根目录 {source} 是隐藏目录，但无法安全自动迁移。请选择可见根目录并手动移动其中的 YOLO 文件。',
+      yoloBaseDirConflictTitle: 'YOLO 根目录未移动',
+      yoloBaseDirConflictMessage:
+        '{target} 已存在且包含文件。为避免覆盖或合并数据，本次未移动任何内容。请选择空目录或尚不存在的路径。',
       skillsSourcePath: '来源：内置技能 + {path}/*.md + {path}/**/SKILL.md',
       refreshSkills: '刷新',
       skillsEmptyHint: '未发现技能。请在 {path} 下创建 .md 技能文件。',
@@ -395,7 +516,7 @@ export const zh: TranslationKeys = {
       builtinFsSearchLabel: '搜索',
       builtinFsSearchDesc: '搜索库内文件与内容',
       builtinFsReadLabel: '读取',
-      builtinFsReadDesc: '读取库内文件',
+      builtinFsReadDesc: '读取库内文件、技能或已打开网页（browser://）',
       builtinContextPruneToolResultsLabel: '裁剪工具调用结果',
       builtinContextPruneToolResultsDesc:
         '从后续上下文中排除历史工具结果；注意，该工具可能会破坏上下文缓存，增加请求开销',
@@ -410,8 +531,10 @@ export const zh: TranslationKeys = {
       fsEditReviewToggle: '编辑文件是否需要审批',
       fsEditReviewToggleDesc:
         '开启后，Agent 的 fs_edit 会先进入 inline/apply 审阅，再写入文件。',
-      builtinFsFileOpsLabel: '文件操作集',
-      builtinFsFileOpsDesc: '写入、删除、移动文件与文件夹',
+      builtinFsEditOpsLabel: '文件编辑工作集',
+      builtinFsEditOpsDesc: '局部编辑或完整写入文件内容',
+      builtinFsFileOpsLabel: '路径操作集',
+      builtinFsFileOpsDesc: '删除、移动文件或文件夹，创建文件夹',
       builtinMemoryOpsLabel: '记忆工具集',
       builtinMemoryOpsDesc: '新增、更新、删除记忆',
       builtinMemoryAddLabel: '新增记忆',
@@ -482,8 +605,10 @@ export const zh: TranslationKeys = {
       toolApproval: '审批',
       toolApprovalFullAccess: '完全放行',
       toolApprovalRequire: '需要审批',
-      toolApprovalForced: '强制审批',
+      toolDisclosureAuto: 'Auto',
+      toolDisclosureAutoSelect: '自动选择',
       toolDisclosureAlways: '常驻上下文',
+      toolDisclosureMixed: '混合',
       toolDisclosureOnDemand: '按需披露',
       editorEnabled: '已启用',
       editorDisabled: '已禁用',
@@ -517,7 +642,8 @@ export const zh: TranslationKeys = {
       skillDisabledGlobally: '已全局禁用',
       agentCapabilitiesBlockTitle: 'Agent 能力',
       focusSyncTitle: '焦点同步',
-      focusSyncDesc: '启用后，AI 可以感知到你正在阅读的内容和位置。',
+      focusSyncDesc:
+        '启用后，AI 可以感知你正在阅读的笔记、PDF 或网页的位置。完整网页正文通过 fs_read 的 browser:// 路径读取。',
       timeContextTitle: '当前时间感知',
       timeContextDesc: '让模型知道每条消息发送时的当前时间。',
       imageReadingBlockTitle: '图片读取',
@@ -546,6 +672,16 @@ export const zh: TranslationKeys = {
       autoContextCompactionThresholdRatioPercent: '上下文窗口占用（%）',
       autoContextCompactionThresholdRatioPercentDesc:
         '当 prompt_tokens 除以当前聊天模型配置的最大上下文窗口达到该比例时触发（需在模型中填写 max context）。',
+      mcpServerBlockTitle: '外部 Agent 接入',
+      mcpServerEnabled: '允许外部 Agent 访问',
+      mcpServerDesc:
+        '允许外部 Agent 通过 MCP 搜索 Vault，并向已配置的 YOLO Agent 委派任务。',
+      mcpServerDesktopOnly: 'MCP 服务仅支持桌面端。',
+      mcpServerClientConfig: 'MCP 连接配置',
+      mcpServerCopyConfig: '复制',
+      mcpServerError: '启动失败',
+      mcpServerConfigCopied: '已复制 MCP 配置。',
+      mcpServerCopyFailed: '复制 MCP 配置失败。',
       jsSandboxExtTitle: '扩展能力',
       jsSandboxAllowFetch: '允许网络请求',
       jsSandboxAllowFetchDesc:
@@ -556,14 +692,24 @@ export const zh: TranslationKeys = {
         '开启后，脚本可以请求浏览器允许访问的网络地址；遇到浏览器跨域限制时，也可以使用单独的 YOLO 宿主请求。仅在你信任此 Agent 时继续。是否继续？',
       jsSandboxAllowVaultRead: '允许读取库文件',
       jsSandboxAllowVaultReadDesc:
-        '允许脚本按路径读取任意库文件。此能力不受 Agent 目录限制约束。风险：脚本可能将笔记内容传递给外部服务。',
+        '允许脚本列出库内路径，并按路径读取任意库文件。此能力不受 Agent 目录限制约束。风险：脚本可能将笔记内容传递给外部服务。',
       jsSandboxAllowVaultReadConfirm:
-        '开启后，AI 生成的脚本可按路径读取 vault 中任意文件，内容将进入 LLM 上下文。请确认您信任此 Agent 生成的脚本后再继续。',
+        '开启后，AI 生成的脚本可列出 vault 路径，并按路径读取 vault 中任意文件，内容将进入 LLM 上下文。请确认您信任此 Agent 生成的脚本后再继续。',
+      jsSandboxAllowBrowserRead: '允许读取已打开网页',
+      jsSandboxAllowBrowserReadDesc:
+        '允许脚本按页面 ID 读取 Obsidian 中已打开网页的完整 HTML。网页可能包含登录态或私有内容。',
+      jsSandboxAllowBrowserReadRisk:
+        '风险：脚本可读取你在 Obsidian 中已打开网页的完整 DOM，包括隐藏字段、内嵌状态以及私有或登录态内容。仅在你完全信任此 Agent 时开启。',
+      jsSandboxAllowBrowserReadConfirm:
+        '开启后，AI 生成的脚本可按页面 ID 读取 Obsidian 中已打开网页的完整 HTML，内容将进入 LLM 上下文。是否继续？',
+      jsSandboxBrowserReadMaxKb: '网页 HTML 大小上限（KB）',
+      jsSandboxBrowserReadMaxKbDesc:
+        '单次完整 HTML 读取上限。超过上限的网页会被拒绝，而不是截短。范围 1–1048576 KB。留空使用默认值。',
       jsSandboxAllowDbQuery: '允许知识库查询',
       jsSandboxAllowDbQueryDesc:
-        '允许脚本查询向量数据库（语义搜索、关键词搜索、路径查找）。此能力不受 Agent 目录限制约束。',
+        '允许脚本使用语义搜索查询已索引的库内容，并按已知路径读取 Markdown / 文本内容。此能力不受 Agent 目录限制约束。',
       jsSandboxAllowDbQueryConfirm:
-        '开启后，AI 生成的脚本可搜索 vault 索引并获取文件内容。是否继续？',
+        '开启后，AI 生成的脚本可搜索已索引内容，并按已知路径读取 Markdown / 文本内容。是否继续？',
       jsSandboxAllowExternalScripts: '允许加载外部脚本',
       jsSandboxAllowExternalScriptsDesc:
         '允许脚本加载并运行远程 JavaScript，同时打开这些脚本常用的浏览器能力。',
@@ -572,7 +718,6 @@ export const zh: TranslationKeys = {
       jsSandboxAllowExternalScriptsConfirm:
         '开启后，Agent 可以在 Obsidian 内加载并运行远程 JavaScript。这个能力很强也很危险；仅在你完全信任此 Agent 和代码来源时继续。是否继续？',
       jsSandboxConfirmEnableTitle: '开启扩展能力',
-      jsExecApprovalForced: '启用后强制审批',
       jsSandboxTimeoutMs: '执行超时（毫秒）',
       jsSandboxTimeoutMsDesc: '单次脚本调用的最大运行时间。范围 {min}–{max}。',
       jsSandboxOutputMaxKb: '工具结果大小上限（KB）',
@@ -581,8 +726,9 @@ export const zh: TranslationKeys = {
       jsSandboxVaultReadMaxKb: '读取大小上限（KB）',
       jsSandboxVaultReadMaxKbDesc:
         '单次读取的返回上限。文本超出会被截断并附带提示；较大的二进制文件会直接拒绝。范围 {min}–{max} KB。',
-      jsSandboxDbMaxLimit: '单次查询最大行数',
-      jsSandboxDbMaxLimitDesc: '知识库查询单次返回行数的上限。范围 1–100。',
+      jsSandboxDbMaxLimit: '语义搜索最大行数',
+      jsSandboxDbMaxLimitDesc:
+        '语义搜索的返回行数上限。按路径读取不受此项影响。范围 1–100。',
     },
     jsSandbox: {
       openSettings: '配置 JavaScript 执行',
@@ -683,7 +829,7 @@ export const zh: TranslationKeys = {
       pickerTitle: '添加提供商',
       pickerSearchPlaceholder: '搜索提供商 · 按 Enter 键搜索',
       pickerCustomLabel: '自定义提供商',
-      pickerCustomDesc: '手动填写 Base URL 与 API Key',
+      pickerCustomDesc: 'Base URL + API Key',
       pickerEmpty: '没有匹配的提供商',
       categoryAll: '全部',
       categoryMain: '国际',
@@ -707,7 +853,6 @@ export const zh: TranslationKeys = {
         morph: '编辑模型',
         deepseek: '对话 · 推理',
         moonshot: '长上下文',
-        qwenOAuth: '通义账号',
         openrouter: '路由聚合',
         azure: '企业云',
         bedrock: '企业云',
@@ -738,6 +883,7 @@ export const zh: TranslationKeys = {
       baseUrlDesc:
         '第三方服务的 API 端点地址，例如：https://api.example.com/v1 或 https://your-proxy.com/openai（使用默认值可留空）',
       baseUrlPlaceholder: 'https://api.example.com/v1',
+      apiUrlPreviewLabel: '预览：',
       noStainlessHeaders: '无 Stainless 请求头',
       noStainlessHeadersDesc:
         '如果你遇到与 Stainless 请求头相关的 CORS 错误（x-stainless-os 等），请启用此选项',
@@ -751,6 +897,11 @@ export const zh: TranslationKeys = {
       requestTransportModeBrowser: '浏览器请求',
       requestTransportModeObsidian: 'Obsidian 内置请求',
       requestTransportModeNode: '桌面直连（推荐）',
+      responseStreamingMode: '响应流式模式',
+      responseStreamingModeDesc: '控制此提供商使用流式还是非流式响应。',
+      responseStreamingModeAuto: '自动（默认）',
+      responseStreamingModeStreaming: '流式',
+      responseStreamingModeNonStreaming: '非流式',
       promptCaching: '提示缓存',
       promptCachingDesc:
         '启用 Anthropic 临时提示缓存。在连续对话中复用系统提示、工具列表和历史消息，显著降低输入 token 消耗。写缓存有 25% 溢价，命中读取约为原价 10%。仅当渠道 API 类型为 Anthropic 时生效；是否真正生效取决于上游服务是否支持 cache_control 字段。',
@@ -783,16 +934,6 @@ export const zh: TranslationKeys = {
       geminiOAuthProject: '项目',
       geminiOAuthStreamingNotice:
         'Gemini OAuth 支持流式传输；使用 Obsidian requestUrl 时会退化为缓冲输出，桌面端 Node fetch 可提供实时流式。',
-      qwenOAuthTitle: 'Qwen OAuth',
-      qwenOAuthConnect: '连接',
-      qwenOAuthDisconnect: '断开连接',
-      qwenOAuthConnecting: '连接中...',
-      qwenOAuthLoadingStatus: '正在加载 Qwen OAuth 状态...',
-      qwenOAuthConnected: '已连接',
-      qwenOAuthExpires: '过期时间',
-      qwenOAuthDisconnectedHelp: '未连接。连接后即可使用你的 Qwen 账号模型。',
-      qwenOAuthStreamingNotice:
-        'Qwen OAuth 支持流式传输；使用 Obsidian requestUrl 时会退化为缓冲输出，桌面端 Node fetch 可提供实时流式。',
     },
     models: {
       title: '模型',
@@ -1141,7 +1282,7 @@ export const zh: TranslationKeys = {
       snippets: {
         sectionTitle: '快捷指令',
         sectionDesc:
-          '在聊天输入框中输入 / 后选中即可插入预设的 prompt 片段。片段存储在 YOLO/snippets.md。',
+          '在聊天输入框中输入 / 后选中即可插入预设的 prompt 片段。片段存储在 {{path}}。',
         cardName: '快捷指令库',
         cardDescCount: '{count} 条快捷指令',
         cardDescMissing: '暂无 snippets.md 文件',
@@ -1149,7 +1290,7 @@ export const zh: TranslationKeys = {
         initBtn: '初始化快捷指令',
         modalTitle: '管理快捷指令',
         modalCallout:
-          '快捷指令存储在 YOLO/snippets.md。通过聊天输入框 / 触发后选中即插入正文。',
+          '快捷指令存储在 {{path}}。通过聊天输入框 / 触发后选中即插入正文。',
         openFileBtn: '打开 snippets.md',
         createFileBtn: '创建 snippets.md',
         empty: '还没有快捷指令',
@@ -1269,6 +1410,10 @@ export const zh: TranslationKeys = {
     },
     etc: {
       title: '其他',
+      pluginAutoUpdate: '自动下载更新',
+      pluginAutoUpdateDesc: '开启后检测到新版本会自动在后台加载。',
+      pluginAutoUpdateDescUnavailable:
+        '开启后会自动下载模块更新；主插件的一键安装仅在桌面端且插件目录可写时可用。',
       exportConfig: '导出配置',
       exportConfigDesc:
         '将当前插件配置导出为 JSON 文件，方便在其他笔记库中导入使用。',
@@ -1313,6 +1458,22 @@ export const zh: TranslationKeys = {
       yoloBaseDirDesc:
         '填写库内相对路径（不要以 / 开头）。例如：放在库根目录填 YOLO；放在 setting 文件夹下填 setting/YOLO。当前技能目录：{path}。',
       yoloBaseDirPlaceholder: 'YOLO',
+      yoloBaseDirHiddenPath:
+        'YOLO 根目录不能使用隐藏文件夹。请移除文件夹名称开头的“.”，例如将 .yolo 改为 yolo。',
+      yoloBaseDirInvalidPath:
+        'YOLO 根目录包含跨设备不支持的文件夹名称。请勿使用控制字符、Windows 保留名称或字符 <>:"\\|?*。',
+      yoloBaseDirMigrated:
+        'YOLO 根目录现已使用 {target}，Obsidian 可以正常索引它。',
+      yoloBaseDirMigrationConflict:
+        'YOLO 根目录未移动，因为 {target} 已存在；已保留原有设置。',
+      yoloBaseDirMigrationFailed: 'YOLO 根目录迁移失败；已保留原有设置。',
+      yoloBaseDirMigrationRollbackFailed:
+        'YOLO 已从 {source} 移动到 {target}，但设置更新失败且无法回滚。请先手动将目录移回 {source}。',
+      yoloBaseDirMigrationManualRepair:
+        'YOLO 根目录 {source} 是隐藏目录，但无法安全自动迁移。请选择可见根目录并手动移动其中的 YOLO 文件。',
+      yoloBaseDirConflictTitle: 'YOLO 根目录未移动',
+      yoloBaseDirConflictMessage:
+        '{target} 已存在且包含文件。为避免覆盖或合并数据，本次未移动任何内容。请选择空目录或尚不存在的路径。',
       ribbonClickAction: '侧边栏图标点击位置',
       ribbonClickActionDesc:
         '选择点击左侧边栏 YOLO 图标时，Chat 视图在哪里打开。若选定位置已有 Chat 视图会直接激活复用，否则新建。',
@@ -1918,6 +2079,9 @@ export const zh: TranslationKeys = {
     recorderUnsupported: '当前环境不支持录音。',
     recordingCancelled: '录音已取消。',
     finishCurrentTaskNotice: '请先完成当前语音任务，再转写文件。',
+    managedPathTransitionNotice: 'YOLO 文件正在移动，请稍后再试。',
+    managedPathWriteTimeoutNotice:
+      '语音文件仍在保存，YOLO 根目录未更改。请等待保存完成后重试。',
     audioFileDisabledNotice: '音频文件转写未在语音输入设置中启用。',
     failed: '语音输入失败。',
     failedWithMessage: '语音输入失败：{{message}}',
@@ -2006,8 +2170,6 @@ export const zh: TranslationKeys = {
     newChat: '新建聊天',
     untitledConversation: '新对话',
     continueResponse: '继续生成',
-    loadEarlierMessages: '正在加载更早消息',
-    loadNewerMessages: '正在加载更新消息',
     messageNavigator: {
       title: '消息导航',
       itemAriaLabel: '跳转到第 {index} 条消息：{label}',
@@ -2043,8 +2205,14 @@ export const zh: TranslationKeys = {
     selectModel: '选择模型',
     uploadImage: '上传图片',
     uploadFile: '添加文件',
+    dropFilesHint: '松开以添加文件',
     imageUnsupportedByModel:
       '当前模型未声明支持图片输入；请在模型设置里开启「图片」模态后再上传。',
+    unsupportedFileType: '不支持的文件类型：{names}',
+    processImagesFailed: '处理上传图片失败',
+    readPdfFailed: '读取 PDF「{name}」失败：{error}',
+    readOfficeFailed: '读取 Office 文档「{name}」失败：{error}',
+    readTextAttachmentFailed: '读取文本文件「{name}」失败：{error}',
     addContext: '添加上下文',
     applyChanges: '应用更改',
     copyMessage: '复制消息',
@@ -2086,14 +2254,22 @@ export const zh: TranslationKeys = {
       createSnippetsFile: '点击创建 snippets.md',
     },
     emptyState: {
+      workspaceTitle: '今天想在 {vaultName} 中做点什么？',
       askTitle: '先想清楚，再落笔',
       askDescription: '适合提问、润色与改写，专注表达本身',
       chatTitle: '先想清楚，再落笔',
       chatDescription: '适合提问、润色与改写，专注表达本身',
       agentTitle: '让 AI 去执行',
       agentDescription: '启用工具链，处理搜索、读写与多步骤任务',
-      agentFullTitle: '让 AI 去执行 · Full Access',
-      agentFullDescription: '启用工具链，处理搜索、读写与多步骤任务',
+      agentFullTitle: '让 AI 自主执行 · YOLO 模式',
+      agentFullDescription: '自动放行工具调用，处理搜索、读写与多步骤任务',
+    },
+    quickAccess: {
+      manage: '管理常用入口',
+      searchPlaceholder: '搜索 Skills 或快捷指令',
+      skills: 'Skills',
+      snippets: '快捷指令',
+      empty: '没有匹配项',
     },
     compaction: {
       pendingTitle: '正在压缩上下文',
@@ -2209,6 +2385,21 @@ export const zh: TranslationKeys = {
     },
     errorCard: {
       title: '本次回复生成失败',
+      responseFormat: {
+        responseNotObject: '模型服务返回的响应不是对象（实际为 {{actual}}）。',
+        missingChoices: '模型服务返回了无法解析的响应格式：缺少 choices 数组。',
+        invalidChoices:
+          '模型服务返回了无法解析的响应格式：choices 不是数组（实际为 {{actual}}）。',
+        stage: '阶段：{{stage}}',
+        expected: '期望字段：{{field}}',
+        expectedChoicesArray: 'choices 数组',
+        responseFields: '响应字段：{{fields}}',
+        upstreamError: '上游错误：{{message}}',
+        errorType: '错误类型：{{type}}',
+        errorCode: '错误代码：{{code}}',
+        upstreamMessage: '上游消息：{{message}}',
+        responsePreview: '响应片段：{{preview}}',
+      },
     },
     customRewritePromptPlaceholder:
       '输入你的改写指令，例如：“语气更简洁、采用主动语态，保留 Markdown 结构”。按 Shift+回车 确认，回车换行，Esc 关闭。',
@@ -2228,7 +2419,8 @@ export const zh: TranslationKeys = {
         fs_search: '搜索知识库',
         fs_read: '读取文件',
         fs_edit: '文本编辑',
-        fs_file_ops: '文件操作集',
+        fs_edit_ops: '文件编辑工作集',
+        fs_file_ops: '路径操作集',
         memory_add: '新增记忆',
         memory_update: '更新记忆',
         memory_delete: '删除记忆',
@@ -2260,6 +2452,7 @@ export const zh: TranslationKeys = {
       noParameters: '无参数',
       result: '结果',
       error: '错误',
+      rejectionReason: '拒绝原因',
       allow: '允许',
       reject: '拒绝',
       abort: '停止执行',
@@ -2301,6 +2494,15 @@ export const zh: TranslationKeys = {
       statusFailed: '失败',
       toolUseCount: '{count} 个工具',
       tokenCount: '{count} tokens',
+      approval: {
+        heading: '等待审批',
+        headingMulti: '等待审批 · {count} 项',
+        approve: '同意',
+        reject: '拒绝',
+        approveAll: '全部同意',
+        rejectAll: '全部拒绝',
+        viewDetails: '查看参数',
+      },
     },
     conversationSettings: {
       openAria: '对话设置',
@@ -2368,9 +2570,8 @@ export const zh: TranslationKeys = {
     agentStatusRunning: '运行中',
     agentStatusWaitingApproval: '待审批',
     agentStatusFallbackConversationTitle: '运行中的对话',
-    backgroundStatusAriaLabel: '后台任务状态，点击查看详情',
-    backgroundStatusPanelTitle: '后台任务',
-    backgroundStatusPanelEmpty: '当前没有正在运行的后台任务',
+    backgroundStatusPanelTitle: '活动与提醒',
+    backgroundStatusPanelEmpty: '当前没有活动或提醒',
     backgroundTasksRunning: '当前有 {count} 个后台任务正在运行',
     backgroundTasksNeedAttention: '有后台任务需要关注',
     ragAutoUpdateRunning: '知识库正在后台更新',
@@ -2459,30 +2660,20 @@ export const zh: TranslationKeys = {
     rewriteDesc: '仅修改当前选区',
     agent: 'Agent',
     agentDesc: '启用工具链，处理多步骤任务',
-    agentFull: 'Agent（Full Access）',
-    agentFullDesc: '自动放行全部工具调用',
-    warning: {
-      title: '⚠️ Agent 模式风险提示',
-      description:
-        'Agent 具备自动调用工具、修改文件内容的能力。请在继续前了解以下风险：',
-      permission:
-        '模型可能出错：部分操作可能无法撤销，请严格控制工具调用权限，仅授予必要权限',
-      cost: '资源消耗较高：Agent 任务可能消耗较多 Token 并产生更高成本',
-      backup: '请提前备份：重要内容建议备份，以防误操作导致意外变更',
-      checkbox: '我已了解上述风险，并愿意自行承担相关后果',
-      cancel: '取消',
-      confirm: '继续并启用 Agent',
-    },
+    agentFull: 'Agent（YOLO）',
+    agentFullDesc: '自动放行工具调用，适合复杂任务',
+    yolo: 'YOLO',
+    yoloDesc: '自动放行工具调用，适合复杂任务',
     fullAccessWarning: {
-      title: '⚠️ 完全放行模式风险提示',
+      title: '⚠️ YOLO 模式风险提示',
       description:
-        '完全放行将自动批准全部工具调用，包括文件编辑与终端命令。请在继续前了解以下风险：',
+        'YOLO 模式会自动批准全部工具调用，包括文件编辑与终端命令。请在继续前了解以下风险：',
       permission: '工具调用不再逐条确认；危险命令前缀黑名单仍会拦截',
       cost: '自主执行可能消耗较多 Token 并产生更高成本',
       backup: '请提前备份：重要内容建议备份，以防误操作导致意外变更',
       checkbox: '我已了解上述风险，并愿意自行承担相关后果',
       cancel: '取消',
-      confirm: '继续并启用完全放行',
+      confirm: '继续并启用 YOLO 模式',
     },
   },
 
@@ -2497,29 +2688,36 @@ export const zh: TranslationKeys = {
     low: '低',
     medium: '中',
     high: '高',
-    extraHigh: '超高',
+    xhigh: '极高',
+    max: 'Max',
     offDesc: '不进行任何思考，直接回答',
     autoDesc: '由模型根据问题决定思考强度',
     lowDesc: '轻量思考，响应更快',
     mediumDesc: '平衡的思考深度',
     highDesc: '深入思考，适合复杂问题',
-    extraHighDesc: '极致思考，处理最棘手的推理',
+    xhighDesc: '极深度思考，适合高难度任务',
+    maxDesc: '最大推理强度，适合最复杂的任务',
   },
 
   configTransfer: {
     export: {
       title: '导出配置',
-      description: '选择要导出的配置项',
+      description: '选择要导出的配置项，文件将保存到 {path}',
       selectAll: '全选',
       selectNone: '全不选',
       sensitive: '含凭证',
       redactedOption:
         '脱敏导出（替换 API Key / 密码 / Header / 环境变量等凭证为随机字符串）',
+      moduleConfigsUnredactedOnly:
+        '模块配置可能包含模块私有凭证，脱敏导出不会包含它们。',
+      confirmUnredactedTitle: '确认导出',
+      confirmUnredacted:
+        '未脱敏导出会把 API Key / 密码 / Header / 环境变量等敏感信息保存到当前库内文件。确定继续吗？',
       submit: '导出',
       cancel: '取消',
       noticeAtLeastOne: '请至少选择一项配置',
       noticeReadFailed: '无法读取当前配置数据',
-      noticeSuccess: '配置已导出为 {fileName}',
+      noticeSuccess: '配置已导出到 {path}',
       noticeFailed: '配置导出失败，请检查控制台日志',
     },
     import: {
@@ -2550,6 +2748,8 @@ export const zh: TranslationKeys = {
       noticeAtLeastOne: '请至少选择一项配置',
       noticeSuccess: '配置导入成功',
       noticeFailed: '配置导入失败',
+      noticePartialModuleConfig:
+        'Host 配置已导入，但模块配置导入失败；部分模块配置可能已写入，未自动回滚。',
     },
     errors: {
       errorNotJson: '文件内容不是有效的 JSON 对象',
@@ -2559,8 +2759,6 @@ export const zh: TranslationKeys = {
       errorInvalidSettingsVersion: '配置文件中的设置版本号不合法，可能已损坏。',
       errorFileFromNewerVersion:
         '配置文件来自更高版本的插件（版本 {fileVersion}），当前插件版本为 {currentVersion}，请先升级当前插件后再导入。',
-      errorFileFromOlderVersion:
-        '配置文件来自旧版本的插件（版本 {fileVersion}），当前插件版本为 {currentVersion}。请在源端升级 YOLO 插件后重新导出。',
       errorEmptyKeys: '配置文件中没有包含任何配置项。',
       errorMissingData: '配置文件中的数据字段缺失或不合法。',
       errorTampered:
@@ -2571,11 +2769,9 @@ export const zh: TranslationKeys = {
         '目标笔记库的配置数据缺少 version 字段，无法判断版本兼容性。',
       errorVaultFromNewerVersion:
         '目标笔记库使用更高版本的插件（版本 {vaultVersion}），当前插件版本为 {currentVersion}，请先升级当前插件后再导入。',
-      errorVaultFromOlderVersion:
-        '目标笔记库使用旧版本的插件（版本 {vaultVersion}），当前插件版本为 {currentVersion}。请先在目标笔记库升级 YOLO 插件后再导入。',
       errorVaultEmpty: '目标笔记库的配置数据为空',
       errorApplyVersionMismatch:
-        '导入数据版本（{importVersion}）与当前插件版本（{currentVersion}）不一致，无法导入。',
+        '导入数据版本（{importVersion}）高于当前插件版本（{currentVersion}），无法导入。',
       errorApplySchema: '导入的配置未通过校验，可能存在字段缺失或格式错误。',
     },
     keyLabels: {
@@ -2594,10 +2790,14 @@ export const zh: TranslationKeys = {
       debug: '调试设置',
       chatOptions: '对话偏好',
       notificationOptions: '通知设置',
+      contextVoiceInputOptions: '语音设置',
       continuationOptions: '续写与补全',
       assistants: 'Agent 配置',
       currentAssistantId: '当前 Agent',
       quickAskAssistantId: 'Quick Ask Agent',
+      jsSandbox: 'JS 沙箱权限',
+      pluginUpdateAutoDownloadEnabled: '插件自动下载更新',
+      moduleConfigs: '模块配置',
     },
   },
 
@@ -2610,8 +2810,8 @@ export const zh: TranslationKeys = {
     dismiss: '关闭',
     languageEnglish: 'EN',
     languageChinese: '中文',
-    muteThisVersion: '当前版本不提示',
     viewHistory: '查看历史更新',
+    skipVersion: '当前版本不提示',
     historyTitle: '历史更新日志',
     historyLoading: '正在加载更新日志…',
     historyError: '加载更新日志失败，请稍后重试。',
@@ -2621,8 +2821,22 @@ export const zh: TranslationKeys = {
     historyNext: '下一页',
     installationIncompleteTitle: '插件安装不完整',
     installationIncompleteMeta:
-      '主程序 {bakedVersion} · manifest {manifestVersion}',
+      '主程序 {mainVersion} · manifest {manifestVersion} · 样式 {stylesVersion}',
+    installationIncompleteSuspects: '待修复：{files}',
     installationIncompleteNotes:
-      '这通常是更新时 main.js 未能完整下载所致。建议备份 data.json 后，删除插件并重新安装。',
+      '插件文件可能未完整下载。将自动尝试修复；你也可以点击下方按钮手动重试。',
+    tryRepair: '尝试修复',
+    repairing: '修复中 {{progress}}%',
+    repairAndReload: '修复并重启',
+    downloadUpdate: '下载更新',
+    downloading: '下载中 {{progress}}%',
+    backgroundDownloading: '正在后台下载…',
+    installAndReload: '安装并重启',
+    applying: '正在安装…',
+    downloadFailed: '下载失败',
+    installFailed: '安装失败',
+    viewOnGitHub: '在 GitHub 查看',
+    updateInCommunityPlugins: '在社区插件中更新',
+    manualInstallOnGitHub: '无法更新？前往 GitHub 手动安装',
   },
 }

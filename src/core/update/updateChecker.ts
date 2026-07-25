@@ -10,6 +10,13 @@ const VOICE_RELEASE_TAG_PAGE_BASE =
 const GITHUB_RELEASES_URL =
   'https://api.github.com/repos/Lapis0x0/obsidian-yolo/releases'
 
+const GITHUB_RELEASE_DOWNLOAD_BASE =
+  'https://github.com/concentrate1/obsidian-yolo/releases/download'
+
+function releaseTagUrl(version: string): string {
+  return buildVoiceReleaseApiUrl(version)
+}
+
 /** Matches the UI page size and GitHub `per_page` for on-demand loading. */
 export const RELEASE_HISTORY_PAGE_SIZE = 10
 
@@ -19,6 +26,8 @@ export type ReleaseNotesByLanguage = {
 }
 
 export type ReleaseHistoryEntry = {
+  productId: string
+  productName: string
   version: string
   releaseNotes: ReleaseNotesByLanguage
   releaseUrl: string
@@ -30,11 +39,34 @@ export type ReleaseHistoryPageResult = {
   hasNext: boolean
 }
 
+export type ReleaseAssetMeta = {
+  url: string
+  size: number
+  mirrorUrl?: string
+  sha256?: string
+}
+
+export type ReleaseAssets = {
+  mainJs: ReleaseAssetMeta
+  manifestJson: ReleaseAssetMeta
+  stylesCss: ReleaseAssetMeta
+}
+
+/** @deprecated Use ReleaseAssets */
+export type ReleaseAssetUrls = ReleaseAssets
+
 export type UpdateCheckResult = {
   hasUpdate: boolean
   latestVersion: string
   releaseNotes: ReleaseNotesByLanguage
   releaseUrl: string
+  assets: ReleaseAssets | null
+}
+
+type GitHubReleaseAsset = {
+  name?: string
+  browser_download_url?: string
+  size?: number
 }
 
 type GitHubReleaseResponse = {
@@ -44,6 +76,7 @@ type GitHubReleaseResponse = {
   draft?: boolean
   prerelease?: boolean
   published_at?: string
+  assets?: GitHubReleaseAsset[]
 }
 
 type VoiceManifestResponse = {
@@ -59,12 +92,12 @@ function buildVoiceReleasePageUrl(version: string): string {
 }
 
 function stripVersionPrefix(tag: string): string {
-  return tag.replace(/^v/i, '').trim()
+  return (tag ?? '').replace(/^v/i, '').trim()
 }
 
 /** Normalizes manifest/tag versions for equality checks against release entries. */
 export function normalizePluginVersion(version: string): string {
-  return stripVersionPrefix(version.trim())
+  return stripVersionPrefix((version ?? '').trim())
 }
 
 export type ReleaseHistoryLocateResult = {
@@ -102,7 +135,11 @@ export async function locateReleaseHistoryPage(
     const pageIndex = githubPage - 1
     pageCache.set(pageIndex, fetched)
 
-    if (fetched.entries.some((entry) => entry.version === normalized)) {
+    if (
+      fetched.entries.some(
+        (entry) => entry.productId === 'core' && entry.version === normalized,
+      )
+    ) {
       return { pageIndex, pageCache, found: true }
     }
 
@@ -127,6 +164,9 @@ export function compareVersions(current: string, latest: string): boolean {
   const b = stripVersionPrefix(latest)
     .split('.')
     .map((s) => parseInt(s, 10) || 0)
+  if (a.length === 0 || b.length === 0) {
+    return false
+  }
   const len = Math.max(a.length, b.length)
   for (let i = 0; i < len; i += 1) {
     const av = a[i] ?? 0
@@ -135,6 +175,45 @@ export function compareVersions(current: string, latest: string): boolean {
     if (bv < av) return false
   }
   return false
+}
+
+function isPluginVersion(version: string): boolean {
+  return /^v?\d+(?:\.\d+)*$/i.test(version.trim())
+}
+
+export function parseLatestVersionFromVersionsJson(raw: string): string | null {
+  try {
+    const parsed = JSON.parse(raw) as unknown
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return null
+    }
+
+    let latestVersion: string | null = null
+    for (const version of Object.keys(parsed)) {
+      if (!isPluginVersion(version)) {
+        continue
+      }
+      const normalized = normalizePluginVersion(version)
+      if (!latestVersion || compareVersions(latestVersion, normalized)) {
+        latestVersion = normalized
+      }
+    }
+    return latestVersion
+  } catch {
+    return null
+  }
+}
+
+export function parseReleaseNoteVersion(markdown: string): string | null {
+  for (const raw of markdown.split('\n')) {
+    const line = raw.trim()
+    if (!line.startsWith('#')) {
+      continue
+    }
+    const match = line.match(/^#{1,6}\s+(v?\d+(?:\.\d+)*)\b/i)
+    return match ? normalizePluginVersion(match[1]) : null
+  }
+  return null
 }
 
 /**
@@ -187,7 +266,7 @@ export type ChangelogItem = {
   title: string
   /** Issue/PR ref like `#360`, extracted from the title; null when absent. */
   ref: string | null
-  /** Remainder of the bullet after the title + separator; may contain `code`. */
+  /** Remainder of the bullet after the title + separator; may contain inline Markdown. */
   body: string
 }
 
@@ -300,12 +379,143 @@ export function parseChangelog(markdown: string): ParsedChangelog {
   return { subtitle, sections }
 }
 
+const RELEASE_ASSET_NAMES = {
+  mainJs: 'main.js',
+  manifestJson: 'manifest.json',
+  stylesCss: 'styles.css',
+} as const
+
+function releaseAssetDownloadUrl(version: string, fileName: string): string {
+  return `${GITHUB_RELEASE_DOWNLOAD_BASE}/${encodeURIComponent(version)}/${encodeURIComponent(fileName)}`
+}
+
+export function buildReleaseAssets(version: string): ReleaseAssets | null {
+  const normalized = normalizePluginVersion(version)
+  if (!normalized) {
+    return null
+  }
+
+  return {
+    mainJs: {
+      url: releaseAssetDownloadUrl(normalized, RELEASE_ASSET_NAMES.mainJs),
+      size: 0,
+    },
+    manifestJson: {
+      url: releaseAssetDownloadUrl(
+        normalized,
+        RELEASE_ASSET_NAMES.manifestJson,
+      ),
+      size: 0,
+    },
+    stylesCss: {
+      url: releaseAssetDownloadUrl(normalized, RELEASE_ASSET_NAMES.stylesCss),
+      size: 0,
+    },
+  }
+}
+
+function parseReleaseAssetMeta(
+  assets: GitHubReleaseAsset[] | undefined,
+  fileName: string,
+): ReleaseAssetMeta | null {
+  if (!Array.isArray(assets)) {
+    return null
+  }
+
+  for (const asset of assets) {
+    const name = typeof asset.name === 'string' ? asset.name : ''
+    if (name !== fileName) {
+      continue
+    }
+    const url =
+      typeof asset.browser_download_url === 'string'
+        ? asset.browser_download_url
+        : ''
+    if (!url) {
+      return null
+    }
+    const size = typeof asset.size === 'number' ? asset.size : 0
+    return { url, size }
+  }
+
+  return null
+}
+
+/**
+ * Extracts download URLs and sizes for the three release artifacts from a
+ * GitHub release payload. Returns null when any required asset is missing.
+ */
+export function parseReleaseAssets(
+  assets: GitHubReleaseAsset[] | undefined,
+): ReleaseAssets | null {
+  const mainJs = parseReleaseAssetMeta(assets, RELEASE_ASSET_NAMES.mainJs)
+  const manifestJson = parseReleaseAssetMeta(
+    assets,
+    RELEASE_ASSET_NAMES.manifestJson,
+  )
+  const stylesCss = parseReleaseAssetMeta(assets, RELEASE_ASSET_NAMES.stylesCss)
+  if (!mainJs || !manifestJson || !stylesCss) {
+    return null
+  }
+
+  return { mainJs, manifestJson, stylesCss }
+}
+
+/** @deprecated Use parseReleaseAssets */
+export function parseReleaseAssetUrls(
+  assets: GitHubReleaseAsset[] | undefined,
+): ReleaseAssets | null {
+  return parseReleaseAssets(assets)
+}
+
+/**
+ * Fetches a specific GitHub release by tag/version. Returns null on failure.
+ */
+export async function fetchReleaseByVersion(version: string): Promise<{
+  version: string
+  releaseUrl: string
+  assets: ReleaseAssets | null
+} | null> {
+  const normalized = normalizePluginVersion(version)
+  if (!normalized) {
+    return null
+  }
+
+  try {
+    const response = await requestUrl({
+      url: releaseTagUrl(normalized),
+      method: 'GET',
+      headers: {
+        Accept: 'application/vnd.github+json',
+      },
+    })
+
+    if (response.status < 200 || response.status >= 300) {
+      return null
+    }
+
+    const data = JSON.parse(response.text) as GitHubReleaseResponse
+    const tag = typeof data.tag_name === 'string' ? data.tag_name : ''
+    const releaseVersion = stripVersionPrefix(tag)
+    if (!releaseVersion) {
+      return null
+    }
+
+    return {
+      version: releaseVersion,
+      releaseUrl: typeof data.html_url === 'string' ? data.html_url : '',
+      assets: parseReleaseAssets(data.assets),
+    }
+  } catch {
+    return null
+  }
+}
+
 /**
  * Fetches the yolo-unofficial-dev channel manifest and compares to
- * `currentVersion`. Voice builds deliberately do not follow upstream's latest
- * release endpoint: the branch manifest is the baked update channel, then the
- * matching fork release tag provides changelog details.
- * Returns null on network/parse failure (caller should stay silent).
+ * `currentVersion`. The matching fork release supplies notes and downloadable
+ * assets, keeping voice builds isolated from the upstream signed Core feed.
+ * Returns null on network/parse failure so callers can stay silent.
  */
 export async function checkForUpdate(
   currentVersion: string,
@@ -314,11 +524,8 @@ export async function checkForUpdate(
     const manifestResponse = await requestUrl({
       url: VOICE_CHANNEL_MANIFEST_URL,
       method: 'GET',
-      headers: {
-        Accept: 'application/json',
-      },
+      headers: { Accept: 'application/json' },
     })
-
     if (manifestResponse.status < 200 || manifestResponse.status >= 300) {
       return null
     }
@@ -328,50 +535,46 @@ export async function checkForUpdate(
       typeof manifest.version === 'string'
         ? stripVersionPrefix(manifest.version)
         : ''
-    if (!latestVersion) {
-      return null
-    }
+    if (!latestVersion) return null
 
     const hasUpdate = compareVersions(currentVersion, latestVersion)
     if (!hasUpdate) {
       return {
-        hasUpdate,
+        hasUpdate: false,
         latestVersion,
         releaseNotes: { en: null, zh: null },
         releaseUrl: buildVoiceReleasePageUrl(latestVersion),
+        assets: null,
       }
     }
 
     const releaseResponse = await requestUrl({
       url: buildVoiceReleaseApiUrl(latestVersion),
       method: 'GET',
-      headers: {
-        Accept: 'application/vnd.github+json',
-      },
+      headers: { Accept: 'application/vnd.github+json' },
     })
-
     if (releaseResponse.status < 200 || releaseResponse.status >= 300) {
       return null
     }
 
     const data = JSON.parse(releaseResponse.text) as GitHubReleaseResponse
-    const releaseTag = typeof data.tag_name === 'string' ? data.tag_name : ''
-    const releaseVersion = stripVersionPrefix(releaseTag)
-    if (releaseVersion && releaseVersion !== latestVersion) return null
-    const releaseNotes =
-      typeof data.body === 'string'
-        ? splitReleaseNotesByLanguage(data.body)
-        : { en: null, zh: null }
-    const releaseUrl =
-      typeof data.html_url === 'string'
-        ? data.html_url
-        : buildVoiceReleasePageUrl(latestVersion)
+    const releaseVersion = stripVersionPrefix(
+      typeof data.tag_name === 'string' ? data.tag_name : '',
+    )
+    if (releaseVersion !== latestVersion) return null
 
     return {
       hasUpdate,
       latestVersion,
-      releaseNotes,
-      releaseUrl,
+      releaseNotes:
+        typeof data.body === 'string'
+          ? splitReleaseNotesByLanguage(data.body)
+          : { en: null, zh: null },
+      releaseUrl:
+        typeof data.html_url === 'string'
+          ? data.html_url
+          : buildVoiceReleasePageUrl(latestVersion),
+      assets: parseReleaseAssets(data.assets),
     }
   } catch {
     return null
@@ -425,14 +628,14 @@ function parseReleaseHistoryEntries(
     }
 
     const tag = typeof release.tag_name === 'string' ? release.tag_name : ''
-    const version = stripVersionPrefix(tag)
-    if (!version) {
-      continue
-    }
+    const product = parseProductReleaseTag(tag)
+    if (!product) continue
 
     const body = typeof release.body === 'string' ? release.body : ''
     entries.push({
-      version,
+      productId: product.id,
+      productName: product.name,
+      version: product.version,
       releaseNotes: body
         ? splitReleaseNotesByLanguage(body)
         : { en: null, zh: null },
@@ -442,4 +645,23 @@ function parseReleaseHistoryEntries(
     })
   }
   return entries
+}
+
+function parseProductReleaseTag(
+  tag: string,
+): Readonly<{ id: string; name: string; version: string }> | null {
+  const core = normalizePluginVersion(tag)
+  if (/^\d+(?:\.\d+){2,3}$/.test(core)) {
+    return { id: 'core', name: 'YOLO Core', version: core }
+  }
+  const module = tag.match(
+    /^([a-z][a-z0-9]*(?:-[a-z0-9]+)*)\/v(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$/,
+  )
+  if (!module) return null
+  const id = module[1]
+  return {
+    id,
+    name: id === 'learning' ? 'Learning' : id,
+    version: module[2],
+  }
 }

@@ -100,7 +100,7 @@ const EMPTY_RESULT: DocumentSummaryResult = { summary: '', hotWords: [] }
 
 export type DocumentSummaryManagerDeps = {
   getSettings: () => YoloSettings
-  setSettings: (next: YoloSettings) => Promise<void>
+  setSettings: (next: YoloSettings) => Promise<boolean>
 }
 
 export class DocumentSummaryManager {
@@ -293,7 +293,7 @@ Rules:
         providerClient,
         model,
         request,
-        stream: false,
+        deliveryMode: 'buffered',
         primaryRequestTimeoutMs:
           settings.continuationOptions?.primaryRequestTimeoutMs,
         streamFallbackRecoveryEnabled: false,

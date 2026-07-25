@@ -9,7 +9,12 @@ import {
   renderImportError,
   validateExportFile,
 } from './import-config'
-import { CONFIG_EXPORT_FORMAT_VERSION, ConfigExportFile } from './types'
+import {
+  CONFIG_EXPORT_FORMAT_VERSION,
+  ConfigExportFile,
+  MODULE_CONFIG_EXPORT_FORMAT_VERSION,
+  MODULE_CONFIG_EXPORT_SCHEMA,
+} from './types'
 
 describe('validateExportFile', () => {
   // 不含 checksum 的基础文件（跳过 checksum 校验）
@@ -105,16 +110,23 @@ describe('validateExportFile', () => {
     }
   })
 
-  it('should reject settingsVersion lower than current schema version', async () => {
+  it('should reject a fractional settingsVersion', async () => {
+    const result = await validateExportFile({
+      ...validFile,
+      settingsVersion: SETTINGS_SCHEMA_VERSION - 0.5,
+    })
+    expect(result.valid).toBe(false)
+    if (!result.valid) {
+      expect(result.errorKey).toBe('errorInvalidSettingsVersion')
+    }
+  })
+
+  it('should accept settingsVersion lower than current schema version', async () => {
     const result = await validateExportFile({
       ...validFile,
       settingsVersion: SETTINGS_SCHEMA_VERSION - 1,
     })
-    expect(result.valid).toBe(false)
-    if (!result.valid) {
-      expect(result.errorKey).toBe('errorFileFromOlderVersion')
-      expect(result.params?.fileVersion).toBe(SETTINGS_SCHEMA_VERSION - 1)
-    }
+    expect(result.valid).toBe(true)
   })
 
   it('should reject settingsVersion higher than current schema version', async () => {
@@ -175,13 +187,87 @@ describe('validateExportFile', () => {
     expect(result.valid).toBe(true)
   })
 
-  it('should accept a file with higher formatVersion (forward compatible)', async () => {
+  it('should reject a file with a newer unsupported formatVersion', async () => {
     const futureFile = {
       ...validFile,
       formatVersion: 99,
     }
     const result = await validateExportFile(futureFile)
+    expect(result.valid).toBe(false)
+    if (!result.valid) {
+      expect(result.errorKey).toBe('errorInvalidFormatVersion')
+    }
+  })
+
+  it('keeps v1 Host-only export files compatible', async () => {
+    const result = await validateExportFile({
+      ...validFile,
+      formatVersion: 1,
+    })
     expect(result.valid).toBe(true)
+  })
+
+  it('accepts v2 module configuration and rejects it in v1', async () => {
+    const v2 = {
+      ...validFile,
+      $schema: MODULE_CONFIG_EXPORT_SCHEMA,
+      formatVersion: MODULE_CONFIG_EXPORT_FORMAT_VERSION,
+      keys: ['moduleConfigs'],
+      data: {
+        moduleConfigs: {
+          learning: { schemaVersion: 1, data: { modelId: 'model-a' } },
+        },
+      },
+    }
+    await expect(validateExportFile(v2)).resolves.toMatchObject({ valid: true })
+    await expect(
+      validateExportFile({ ...v2, formatVersion: 1 }),
+    ).resolves.toMatchObject({
+      valid: false,
+      errorKey: 'errorInvalidFormatVersion',
+    })
+  })
+
+  it('rejects module configuration in a redacted export', async () => {
+    const result = await validateExportFile({
+      ...validFile,
+      $schema: MODULE_CONFIG_EXPORT_SCHEMA,
+      formatVersion: MODULE_CONFIG_EXPORT_FORMAT_VERSION,
+      redacted: true,
+      keys: ['moduleConfigs'],
+      data: { moduleConfigs: {} },
+    })
+    expect(result).toMatchObject({ valid: false, errorKey: 'errorTampered' })
+  })
+
+  it('rejects a non-boolean redacted flag', async () => {
+    const result = await validateExportFile({
+      ...validFile,
+      redacted: 'yes',
+    })
+    expect(result).toMatchObject({ valid: false, errorKey: 'errorTampered' })
+  })
+
+  it('requires module data in the module export schema', async () => {
+    const result = await validateExportFile({
+      ...validFile,
+      $schema: MODULE_CONFIG_EXPORT_SCHEMA,
+      formatVersion: MODULE_CONFIG_EXPORT_FORMAT_VERSION,
+      keys: ['providers'],
+      data: { providers: [] },
+    })
+    expect(result).toMatchObject({ valid: false, errorKey: 'errorTampered' })
+  })
+
+  it('rejects malformed module configuration before settings are applied', async () => {
+    const result = await validateExportFile({
+      ...validFile,
+      $schema: MODULE_CONFIG_EXPORT_SCHEMA,
+      formatVersion: MODULE_CONFIG_EXPORT_FORMAT_VERSION,
+      keys: ['moduleConfigs'],
+      data: { moduleConfigs: { learning: { schemaVersion: -1, data: {} } } },
+    })
+    expect(result).toMatchObject({ valid: false, errorKey: 'errorTampered' })
   })
 
   it('should validate checksum end-to-end with buildExportData', async () => {
@@ -258,14 +344,18 @@ describe('parseVaultData', () => {
     }
   })
 
-  it('should reject older vault version', () => {
+  it('should migrate older vault data before extracting importable keys', () => {
     const result = parseVaultData({
-      version: SETTINGS_SCHEMA_VERSION - 1,
-      providers: [],
+      version: 71,
+      ragOptions: { enabled: true },
     })
-    expect(result.valid).toBe(false)
-    if (!result.valid) {
-      expect(result.errorKey).toBe('errorVaultFromOlderVersion')
+    expect(result.valid).toBe(true)
+    if (result.valid) {
+      expect(result.data.settingsVersion).toBe(SETTINGS_SCHEMA_VERSION)
+      expect(result.data.data.ragOptions).toMatchObject({
+        enabled: true,
+        excludeYoloBaseDir: true,
+      })
     }
   })
 
@@ -322,8 +412,10 @@ describe('applyImport', () => {
   })
 
   const makeImportData = (
-    overrides: Partial<ConfigExportFile>,
-  ): ConfigExportFile => ({
+    overrides: Partial<
+      Extract<ConfigExportFile, { $schema: 'yolo-config-export' }>
+    >,
+  ): Extract<ConfigExportFile, { $schema: 'yolo-config-export' }> => ({
     $schema: 'yolo-config-export',
     formatVersion: 1,
     settingsVersion: SETTINGS_SCHEMA_VERSION,
@@ -391,22 +483,60 @@ describe('applyImport', () => {
     expect(result.ragOptions.chunkSize).toBe(1000)
   })
 
-  it('should throw ImportValidationError when settingsVersion does not match', () => {
+  it('should migrate an older partial export before importing it', () => {
     const importData = makeImportData({
       settingsVersion: SETTINGS_SCHEMA_VERSION - 1,
       pluginVersion: '1.4.0',
-      keys: ['chatModelId'],
-      data: { chatModelId: 'existing/gpt-4' },
+      keys: ['ragOptions'],
+      data: { ragOptions: { enabled: false, chunkSize: 750 } },
     })
 
-    expect(() =>
-      applyImport({
-        importData,
-        selectedKeys: ['chatModelId'],
-        currentSettings,
-        mergeStrategy: 'overwrite',
-      }),
-    ).toThrow(ImportValidationError)
+    const result = applyImport({
+      importData,
+      selectedKeys: ['ragOptions'],
+      currentSettings,
+      mergeStrategy: 'overwrite',
+    })
+
+    expect(result.ragOptions.enabled).toBe(false)
+    expect(result.ragOptions.chunkSize).toBe(750)
+    expect(result.ragOptions.excludeYoloBaseDir).toBe(true)
+  })
+
+  it('should not apply migration-generated fields that were not exported', () => {
+    const importData = makeImportData({
+      settingsVersion: SETTINGS_SCHEMA_VERSION - 1,
+      keys: ['systemPrompt'],
+      data: { systemPrompt: 'from old export' },
+    })
+
+    const result = applyImport({
+      importData,
+      selectedKeys: ['systemPrompt'],
+      currentSettings,
+      mergeStrategy: 'overwrite',
+    })
+
+    expect(result.systemPrompt).toBe('from old export')
+    expect(result.ragOptions).toEqual(currentSettings.ragOptions)
+  })
+
+  it('should keep a sparse old export key absent from data untouched', () => {
+    const importData = makeImportData({
+      settingsVersion: SETTINGS_SCHEMA_VERSION - 1,
+      keys: ['systemPrompt', 'ragOptions'],
+      data: { systemPrompt: 'from old export' },
+    })
+
+    const result = applyImport({
+      importData,
+      selectedKeys: ['systemPrompt', 'ragOptions'],
+      currentSettings,
+      mergeStrategy: 'overwrite',
+    })
+
+    expect(result.systemPrompt).toBe('from old export')
+    expect(result.ragOptions).toEqual(currentSettings.ragOptions)
   })
 
   it('should clear apiKey fields when importData.redacted is true', () => {
@@ -610,21 +740,21 @@ describe('applyImport', () => {
 describe('renderImportError', () => {
   it('interpolates params into the i18n template', () => {
     const t = (keyPath: string, fallback?: string): string => {
-      if (keyPath === 'configTransfer.errors.errorFileFromOlderVersion') {
-        return 'File v{fileVersion} < current v{currentVersion}'
+      if (keyPath === 'configTransfer.errors.errorFileFromNewerVersion') {
+        return 'File v{fileVersion} > current v{currentVersion}'
       }
       return fallback ?? keyPath
     }
     const out = renderImportError(
       {
         valid: false,
-        errorKey: 'errorFileFromOlderVersion',
-        fallback: 'old version',
-        params: { fileVersion: 50, currentVersion: 52 },
+        errorKey: 'errorFileFromNewerVersion',
+        fallback: 'newer version',
+        params: { fileVersion: 53, currentVersion: 52 },
       },
       t,
     )
-    expect(out).toBe('File v50 < current v52')
+    expect(out).toBe('File v53 > current v52')
   })
 
   it('falls back to the fallback string when translation is missing', () => {

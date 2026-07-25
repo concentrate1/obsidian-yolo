@@ -5,6 +5,7 @@ import React, {
   useLayoutEffect,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react'
 
 import { useLanguage } from '../../contexts/language-context'
@@ -14,6 +15,7 @@ import { AgentTab } from './tabs/AgentTab'
 import { EditorTab } from './tabs/EditorTab'
 import { KnowledgeTab } from './tabs/KnowledgeTab'
 import { ModelsTab } from './tabs/ModelsTab'
+import { ModulesTab } from './tabs/ModulesTab'
 import { OthersTab } from './tabs/OthersTab'
 import { VoiceTab } from './tabs/VoiceTab'
 
@@ -27,6 +29,7 @@ export type SettingsTabId =
   | 'voice'
   | 'editor'
   | 'knowledge'
+  | 'modules'
   | 'agent'
   | 'others'
 
@@ -34,7 +37,7 @@ type SettingsTab = {
   id: SettingsTabId
   labelKey: string
   labelFallback: string
-  component: FC<SettingsTabsProps>
+  component?: FC<SettingsTabsProps>
 }
 
 const SETTINGS_TABS: SettingsTab[] = [
@@ -69,6 +72,11 @@ const SETTINGS_TABS: SettingsTab[] = [
     component: KnowledgeTab,
   },
   {
+    id: 'modules',
+    labelKey: 'settings.tabs.modules',
+    labelFallback: 'Modules',
+  },
+  {
     id: 'others',
     labelKey: 'settings.tabs.others',
     labelFallback: 'Others',
@@ -94,7 +102,12 @@ export function SettingsTabs({ app, plugin }: SettingsTabsProps) {
     }
     return 'models'
   })
-
+  const registry = plugin.getModuleSettingsContributionRegistry()
+  const moduleSettings = useSyncExternalStore(
+    registry.subscribe,
+    registry.getSnapshot,
+    registry.getSnapshot,
+  )
   useEffect(() => {
     // Save to localStorage when tab changes
     void app.saveLocalStorage(STORAGE_KEY, activeTab)
@@ -194,8 +207,19 @@ export function SettingsTabs({ app, plugin }: SettingsTabsProps) {
           </button>
         ))}
       </div>
-      <div className="yolo-settings-tabs-content">
-        <ActiveComponent app={app} plugin={plugin} />
+      <div
+        className={`yolo-settings-tabs-content ${
+          activeTab === 'modules' ? 'yolo-settings-tabs-content--modules' : ''
+        }`}
+      >
+        {activeTab === 'modules' ? (
+          <ModulesTab
+            service={plugin.getModuleService()}
+            registrations={moduleSettings}
+          />
+        ) : (
+          <ActiveComponent app={app} plugin={plugin} />
+        )}
       </div>
     </div>
   )

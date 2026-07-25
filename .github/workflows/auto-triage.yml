@@ -27,26 +27,68 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.YOLO_BOT_GH_TOKEN }}
 
+      - name: Check auto-triage skip label
+        id: skip-label
+        env:
+          GH_TOKEN: ${{ secrets.YOLO_BOT_GH_TOKEN }}
+          NUMBER: ${{ github.event.issue.number || github.event.pull_request.number || '' }}
+          SKIP_LABEL: no-auto-triage
+        run: |
+          set -euo pipefail
+
+          if [[ -z "$NUMBER" ]]; then
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          skip=false
+          while IFS= read -r label; do
+            if [[ "$label" == "$SKIP_LABEL" ]]; then
+              skip=true
+              break
+            fi
+          done < <(gh api "repos/$GITHUB_REPOSITORY/issues/$NUMBER" --jq '.labels[].name')
+
+          echo "skip=$skip" >> "$GITHUB_OUTPUT"
+          if [[ "$skip" == "true" ]]; then
+            echo "Skipping auto triage because #$NUMBER has the '$SKIP_LABEL' label."
+          fi
+
       - name: Use Node.js
+        if: steps.skip-label.outputs.skip != 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Restore Codex auth
+      - name: Restore Codex config
+        if: steps.skip-label.outputs.skip != 'true'
         env:
-          YOLO_CODEX_AUTH_JSON: ${{ secrets.YOLO_CODEX_AUTH_JSON }}
-          YOLO_CODEX_CONFIG_TOML: ${{ secrets.YOLO_CODEX_CONFIG_TOML }}
+          YOLO_CODEX_API_KEY: ${{ secrets.YOLO_CODEX_API_KEY }}
+          YOLO_CODEX_BASE_URL: ${{ secrets.YOLO_CODEX_BASE_URL }}
         run: |
           set -euo pipefail
+          test -n "$YOLO_CODEX_API_KEY"
+          test -n "$YOLO_CODEX_BASE_URL"
           mkdir -p "$HOME/.codex"
-          printf '%s' "$YOLO_CODEX_AUTH_JSON" > "$HOME/.codex/auth.json"
-          printf '%s' "$YOLO_CODEX_CONFIG_TOML" > "$HOME/.codex/config.toml"
-          chmod 600 "$HOME/.codex/auth.json" "$HOME/.codex/config.toml"
+          {
+            printf '%s\n' 'model_provider = "custom"'
+            printf '%s\n' 'disable_response_storage = true'
+            printf '%s\n' '[model_providers.custom]'
+            printf '%s\n' 'name = "custom"'
+            printf '%s\n' 'wire_api = "responses"'
+            printf '%s\n' 'requires_openai_auth = true'
+            printf 'base_url = "%s"\n' "$YOLO_CODEX_BASE_URL"
+            printf 'experimental_bearer_token = "%s"\n' "$YOLO_CODEX_API_KEY"
+            printf '%s\n' '[projects."/"]'
+            printf '%s\n' 'trust_level = "trusted"'
+          } > "$HOME/.codex/config.toml"
+          chmod 600 "$HOME/.codex/config.toml"
 
       - name: Install Codex and gh
+        if: steps.skip-label.outputs.skip != 'true'
         run: |
           set -euo pipefail
-          npm install -g @openai/codex@0.135.0
+          npm install -g @openai/codex@0.139.0
           if ! command -v gh >/dev/null 2>&1; then
             type -p curl >/dev/null || sudo apt-get update -qq
             type -p curl >/dev/null || sudo apt-get install -y curl
@@ -62,6 +104,7 @@ jobs:
           gh --version | head -1
 
       - name: Configure GitHub identity
+        if: steps.skip-label.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.YOLO_BOT_GH_TOKEN }}
         run: |
@@ -72,6 +115,7 @@ jobs:
           gh auth status
 
       - name: Build prompt
+        if: steps.skip-label.outputs.skip != 'true'
         env:
           EVENT_NAME: ${{ github.event_name }}
           REPO: ${{ github.repository }}
@@ -81,44 +125,48 @@ jobs:
           URL: ${{ github.event.comment.html_url || github.event.review.html_url || github.event.issue.html_url || github.event.pull_request.html_url || '' }}
         run: |
           set -euo pipefail
-          cp .github/prompts/obsidian-yolo-auto-triage.md /tmp/auto-triage-prompt.md
-          if [[ "$EVENT_NAME" != "schedule" && "$EVENT_NAME" != "workflow_dispatch" ]]; then
-            TRIGGER_KIND="owner_mention"
-            if [[ "$EVENT_NAME" == "issues" ]]; then
-              TRIGGER_KIND="intake_issue"
-            elif [[ "$EVENT_NAME" == "pull_request_target" ]]; then
-              TRIGGER_KIND="intake_pr"
-            fi
-            {
-              printf '\n\n<routine-fire-payload>\n'
-              jq -n \
-                --arg trigger_kind "$TRIGGER_KIND" \
-                --arg event_name "$EVENT_NAME" \
-                --arg repo "$REPO" \
-                --arg number "$NUMBER" \
-                --arg author "$AUTHOR" \
-                --arg body "$BODY" \
-                --arg url "$URL" \
-                '{
-                  trigger_kind: $trigger_kind,
-                  event_name: $event_name,
-                  repo: $repo,
-                  number: $number,
-                  url: $url,
-                  author: $author,
-                  body: $body
-                }'
-              printf '\n</routine-fire-payload>\n'
-            } >> /tmp/auto-triage-prompt.md
+          TRIGGER_KIND="routine_scan"
+          if [[ "$EVENT_NAME" == "issues" ]]; then
+            TRIGGER_KIND="intake_issue"
+          elif [[ "$EVENT_NAME" == "pull_request_target" ]]; then
+            TRIGGER_KIND="intake_pr"
+          elif [[ "$AUTHOR" == "Lapis0x0" ]]; then
+            TRIGGER_KIND="owner_command"
+          elif [[ "$EVENT_NAME" != "schedule" && "$EVENT_NAME" != "workflow_dispatch" ]]; then
+            TRIGGER_KIND="user_mention"
           fi
 
+          cp .github/prompts/obsidian-yolo-auto-triage.md /tmp/auto-triage-prompt.md
+          {
+            printf '\n\n<routine-fire-payload>\n'
+            jq -n \
+              --arg trigger_kind "$TRIGGER_KIND" \
+              --arg event_name "$EVENT_NAME" \
+              --arg repo "$REPO" \
+              --arg number "$NUMBER" \
+              --arg author "$AUTHOR" \
+              --arg body "$BODY" \
+              --arg url "$URL" \
+              '{
+                trigger_kind: $trigger_kind,
+                event_name: $event_name,
+                repo: $repo,
+                number: $number,
+                url: $url,
+                author: $author,
+                body: $body
+              }'
+            printf '\n</routine-fire-payload>\n'
+          } >> /tmp/auto-triage-prompt.md
+
       - name: Run Codex triage
+        if: steps.skip-label.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.YOLO_BOT_GH_TOKEN }}
         run: |
           set -euo pipefail
           codex exec \
-            --model gpt-5.5 \
+            --model gpt-5.6-terra \
             --sandbox danger-full-access \
             --cd "$GITHUB_WORKSPACE" \
             - < /tmp/auto-triage-prompt.md

@@ -1,23 +1,166 @@
-jest.mock('obsidian', () => ({
-  requestUrl: jest.fn(),
-}))
-
-import { requestUrl } from 'obsidian'
+import { type RequestUrlResponse, requestUrl } from 'obsidian'
 
 import {
   VOICE_CHANNEL_MANIFEST_URL,
+  buildReleaseAssets,
   checkForUpdate,
   compareVersions,
+  fetchReleaseHistoryPage,
+  locateReleaseHistoryPage,
   normalizePluginVersion,
   parseChangelog,
+  parseLatestVersionFromVersionsJson,
+  parseReleaseAssets,
+  parseReleaseNoteVersion,
   splitReleaseNotesByLanguage,
 } from './updateChecker'
 
 const mockedRequestUrl = requestUrl as jest.MockedFunction<typeof requestUrl>
 
+function createRequestUrlResponse(text: string): RequestUrlResponse {
+  let json: unknown = null
+  try {
+    json = JSON.parse(text) as unknown
+  } catch {
+    json = null
+  }
+
+  return {
+    status: 200,
+    headers: {},
+    arrayBuffer: new ArrayBuffer(0),
+    json,
+    text,
+  }
+}
+
+describe('parseLatestVersionFromVersionsJson', () => {
+  it('returns the highest normalized version key', () => {
+    expect(
+      parseLatestVersionFromVersionsJson(
+        JSON.stringify({
+          '1.5.9': '1.8.0',
+          '1.5.12.4': '1.8.0',
+          v1: 'ignored',
+          '1.5.12.5': '1.8.0',
+          next: 'ignored',
+        }),
+      ),
+    ).toBe('1.5.12.5')
+  })
+
+  it('returns null for invalid JSON or non-object payloads', () => {
+    expect(parseLatestVersionFromVersionsJson('not-json')).toBeNull()
+    expect(parseLatestVersionFromVersionsJson('[]')).toBeNull()
+  })
+})
+
+describe('parseReleaseAssets', () => {
+  it('returns URLs and sizes when all three release assets are present', () => {
+    const result = parseReleaseAssets([
+      {
+        name: 'main.js',
+        browser_download_url: 'https://github.com/example/main.js',
+        size: 12345,
+      },
+      {
+        name: 'manifest.json',
+        browser_download_url: 'https://github.com/example/manifest.json',
+        size: 256,
+      },
+      {
+        name: 'styles.css',
+        browser_download_url: 'https://github.com/example/styles.css',
+        size: 4096,
+      },
+    ])
+    expect(result).toEqual({
+      mainJs: { url: 'https://github.com/example/main.js', size: 12345 },
+      manifestJson: {
+        url: 'https://github.com/example/manifest.json',
+        size: 256,
+      },
+      stylesCss: { url: 'https://github.com/example/styles.css', size: 4096 },
+    })
+  })
+
+  it('defaults missing size to 0', () => {
+    const result = parseReleaseAssets([
+      {
+        name: 'main.js',
+        browser_download_url: 'https://github.com/example/main.js',
+      },
+      {
+        name: 'manifest.json',
+        browser_download_url: 'https://github.com/example/manifest.json',
+      },
+      {
+        name: 'styles.css',
+        browser_download_url: 'https://github.com/example/styles.css',
+      },
+    ])
+    expect(result?.mainJs.size).toBe(0)
+  })
+
+  it('returns null when a required asset is missing', () => {
+    expect(
+      parseReleaseAssets([
+        {
+          name: 'main.js',
+          browser_download_url: 'https://github.com/example/main.js',
+        },
+      ]),
+    ).toBeNull()
+  })
+
+  it('returns null for non-array input', () => {
+    expect(parseReleaseAssets(undefined)).toBeNull()
+  })
+})
+
+describe('buildReleaseAssets', () => {
+  it('builds deterministic release asset URLs for a version', () => {
+    expect(buildReleaseAssets('v1.5.12.2')).toEqual({
+      mainJs: {
+        url: 'https://github.com/concentrate1/obsidian-yolo/releases/download/1.5.12.2/main.js',
+        size: 0,
+      },
+      manifestJson: {
+        url: 'https://github.com/concentrate1/obsidian-yolo/releases/download/1.5.12.2/manifest.json',
+        size: 0,
+      },
+      stylesCss: {
+        url: 'https://github.com/concentrate1/obsidian-yolo/releases/download/1.5.12.2/styles.css',
+        size: 0,
+      },
+    })
+  })
+
+  it('returns null for an empty version', () => {
+    expect(buildReleaseAssets('')).toBeNull()
+  })
+})
 describe('normalizePluginVersion', () => {
   it('strips v prefix and trims whitespace', () => {
     expect(normalizePluginVersion(' v1.5.11.1 ')).toBe('1.5.11.1')
+  })
+})
+
+describe('parseReleaseNoteVersion', () => {
+  it('extracts the version from the first markdown heading', () => {
+    expect(
+      parseReleaseNoteVersion('Intro\n\n## v1.5.12.5 Update Notes ✨'),
+    ).toBe('1.5.12.5')
+  })
+
+  it('returns null when no heading starts with a version', () => {
+    expect(parseReleaseNoteVersion('## Update Notes')).toBeNull()
+  })
+
+  it('does not skip a non-version first heading', () => {
+    expect(
+      parseReleaseNoteVersion('## Update Notes\n\n## 1.5.12.5 Real Version'),
+    ).toBeNull()
   })
 })
 
@@ -61,6 +204,11 @@ describe('checkForUpdate', () => {
           body: '## 1.5.10.2 Voice build\n- **Voice channel**: update notes',
           html_url:
             'https://github.com/concentrate1/obsidian-yolo/releases/tag/1.5.10.2-voice',
+          assets: ['main.js', 'manifest.json', 'styles.css'].map((name) => ({
+            name,
+            browser_download_url: `https://github.com/concentrate1/obsidian-yolo/releases/download/1.5.10.2-voice/${name}`,
+            size: 10,
+          })),
         }),
       } as Awaited<ReturnType<typeof requestUrl>>)
 
@@ -78,6 +226,20 @@ describe('checkForUpdate', () => {
       latestVersion: '1.5.10.2-voice',
       releaseUrl:
         'https://github.com/concentrate1/obsidian-yolo/releases/tag/1.5.10.2-voice',
+      assets: {
+        mainJs: {
+          url: 'https://github.com/concentrate1/obsidian-yolo/releases/download/1.5.10.2-voice/main.js',
+          size: 10,
+        },
+        manifestJson: {
+          url: 'https://github.com/concentrate1/obsidian-yolo/releases/download/1.5.10.2-voice/manifest.json',
+          size: 10,
+        },
+        stylesCss: {
+          url: 'https://github.com/concentrate1/obsidian-yolo/releases/download/1.5.10.2-voice/styles.css',
+          size: 10,
+        },
+      },
     })
     expect(result?.releaseNotes.en).toContain('Voice channel')
   })
@@ -97,6 +259,7 @@ describe('checkForUpdate', () => {
       releaseNotes: { en: null, zh: null },
       releaseUrl:
         'https://github.com/concentrate1/obsidian-yolo/releases/tag/1.5.10.1-voice',
+      assets: null,
     })
   })
 
@@ -269,5 +432,82 @@ describe('parseChangelog', () => {
     ).sections[0].items[0]
     expect(item.title).toBe('js_eval UMD 加载与调试报错')
     expect(item.ref).toBe('#354、#355')
+  })
+})
+
+describe('release history products', () => {
+  beforeEach(() => {
+    mockedRequestUrl.mockReset()
+  })
+
+  it('mixes Core and official module releases while excluding unrelated tags', async () => {
+    mockedRequestUrl.mockResolvedValue(
+      createRequestUrlResponse(
+        JSON.stringify([
+          {
+            tag_name: 'learning/v0.1.0',
+            body: '## 0.1.0 Learning update',
+            html_url: 'https://example.test/learning',
+            draft: false,
+            prerelease: false,
+          },
+          {
+            tag_name: '1.6.0.4',
+            body: '## 1.6.0.4 Core update',
+            html_url: 'https://example.test/core',
+            draft: false,
+            prerelease: false,
+          },
+          {
+            tag_name: 'runtime/v1.0.0',
+            body: 'runtime',
+            draft: false,
+            prerelease: true,
+          },
+          {
+            tag_name: 'internal-build',
+            body: 'internal',
+            draft: false,
+            prerelease: false,
+          },
+        ]),
+      ),
+    )
+
+    await expect(fetchReleaseHistoryPage(1)).resolves.toMatchObject({
+      entries: [
+        {
+          productId: 'learning',
+          productName: 'Learning',
+          version: '0.1.0',
+        },
+        {
+          productId: 'core',
+          productName: 'YOLO Core',
+          version: '1.6.0.4',
+        },
+      ],
+      hasNext: false,
+    })
+  })
+
+  it('does not mistake a module version for the installed Core version', async () => {
+    mockedRequestUrl.mockResolvedValue(
+      createRequestUrlResponse(
+        JSON.stringify([
+          {
+            tag_name: 'learning/v0.1.0',
+            body: '## 0.1.0 Learning update',
+            draft: false,
+            prerelease: false,
+          },
+        ]),
+      ),
+    )
+
+    await expect(locateReleaseHistoryPage('0.1.0')).resolves.toMatchObject({
+      pageIndex: 0,
+      found: false,
+    })
   })
 })

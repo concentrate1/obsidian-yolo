@@ -3,10 +3,12 @@
  *
  * 敏感字段覆盖范围（来自当前 settings schema 实际可能存放凭证的位置）：
  * - `apiKey: string`：providers、各 webSearch provider 都用这个字段名
+ * - `apiSecret: string`：语音 ASR 配置中的签名密钥
  * - `password: string`：webSearch.searxng
  * - `headers: { [k]: string }` 内所有 value：mcp http/sse transport
  * - `env: { [k]: string }` 内所有 value：mcp stdio transport
  * - `customHeaders: [{ key, value }]` 中每项的 value：providers 的自定义请求头
+ * - `mcp.localServer.token`：本地 MCP 服务的认证 token
  *
  * 走单一 walker，导出用 replace（随机字符串），导入用 strip（清空字符串）。
  * 不在白名单内的字段名一律不动，避免误杀业务数据。
@@ -14,7 +16,7 @@
 
 type WalkOp = (value: string) => string
 
-const SENSITIVE_STRING_FIELDS = new Set(['apiKey', 'password'])
+const SENSITIVE_STRING_FIELDS = new Set(['apiKey', 'apiSecret', 'password'])
 const SENSITIVE_RECORD_FIELDS = new Set(['headers', 'env'])
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -55,14 +57,22 @@ function transformCustomHeaders(items: unknown[], op: WalkOp): unknown[] {
  * 返回新对象，不修改输入。
  */
 export function mapSensitiveValues(data: unknown, op: WalkOp): unknown {
+  return mapSensitiveValuesAtPath(data, op, [])
+}
+
+function mapSensitiveValuesAtPath(
+  data: unknown,
+  op: WalkOp,
+  path: readonly string[],
+): unknown {
   if (Array.isArray(data)) {
-    return data.map((item) => mapSensitiveValues(item, op))
+    return data.map((item) => mapSensitiveValuesAtPath(item, op, path))
   }
   if (!isPlainObject(data)) return data
 
   const result: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(data)) {
-    if (SENSITIVE_STRING_FIELDS.has(key) && typeof value === 'string') {
+    if (isSensitiveStringField(key, path) && typeof value === 'string') {
       result[key] = op(value)
       continue
     }
@@ -74,9 +84,20 @@ export function mapSensitiveValues(data: unknown, op: WalkOp): unknown {
       result[key] = transformCustomHeaders(value, op)
       continue
     }
-    result[key] = mapSensitiveValues(value, op)
+    result[key] = mapSensitiveValuesAtPath(value, op, [...path, key])
   }
   return result
+}
+
+function isSensitiveStringField(
+  key: string,
+  parentPath: readonly string[],
+): boolean {
+  if (SENSITIVE_STRING_FIELDS.has(key)) return true
+  // `token` is intentionally path-sensitive: a generic name-based rule would
+  // redact unrelated module or business fields. In the Host settings schema,
+  // this exact path is the local MCP authentication secret.
+  return key === 'token' && parentPath.join('.') === 'mcp.localServer'
 }
 
 /**
@@ -104,13 +125,20 @@ export function clearSensitive(data: unknown): unknown {
  * 避免给"没配 apiKey 的 Ollama / 无 env 的 MCP"误打标。
  */
 export function hasNonEmptyCredentials(data: unknown): boolean {
+  return hasNonEmptyCredentialsAtPath(data, [])
+}
+
+function hasNonEmptyCredentialsAtPath(
+  data: unknown,
+  path: readonly string[],
+): boolean {
   if (Array.isArray(data)) {
-    return data.some((item) => hasNonEmptyCredentials(item))
+    return data.some((item) => hasNonEmptyCredentialsAtPath(item, path))
   }
   if (!isPlainObject(data)) return false
 
   for (const [key, value] of Object.entries(data)) {
-    if (SENSITIVE_STRING_FIELDS.has(key)) {
+    if (isSensitiveStringField(key, path)) {
       if (typeof value === 'string' && value.length > 0) return true
       continue
     }
@@ -128,7 +156,7 @@ export function hasNonEmptyCredentials(data: unknown): boolean {
       }
       continue
     }
-    if (hasNonEmptyCredentials(value)) return true
+    if (hasNonEmptyCredentialsAtPath(value, [...path, key])) return true
   }
   return false
 }

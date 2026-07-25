@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "modules": [
+    {
+      "id": "learning",
+      "version": "0.1.2-dev.0",
+      "icon": "graduation-cap",
+      "localizations": {
+        "en": {
+          "name": "Learning mode",
+          "description": "Build lasting knowledge from your notes with guided learning plans, spaced repetition, and review."
+        },
+        "zh": {
+          "name": "学习模式",
+          "description": "通过学习计划、间隔重复与复习，把笔记转化为能够长期掌握的知识。"
+        },
+        "it": {
+          "name": "Modalità di apprendimento",
+          "description": "Trasforma le note in conoscenze durature con piani di studio guidati, ripetizione dilazionata e ripasso."
+        }
+      },
+      "hostApi": "^1.4.0",
+      "dataSchemas": {
+        "settings": {
+          "readMin": 0,
+          "readMax": 1,
+          "write": 1
+        }
+      },
+      "platforms": [
+        "desktop",
+        "mobile"
+      ],
+      "manifestUrl": "https://github.com/Lapis0x0/obsidian-yolo/releases/download/module-learning-v0.1.2-dev.0/module.json",
+      "manifest": {
+        "byteSize": 1910,
+        "sha256": "7eab51c0099c118124edc24ca888caa8522a0c095e1259de9dd2478f0e8f3e94"
+      }
+    }
+  ]
+}

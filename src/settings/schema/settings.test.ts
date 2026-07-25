@@ -1,3 +1,5 @@
+import { DEFAULT_LOCAL_MCP_SERVER_PORT } from '../../core/mcp/localMcpServerConfig'
+
 import { SETTINGS_SCHEMA_VERSION } from './migrations'
 import {
   DEFAULT_TAB_COMPLETION_LENGTH_PRESET,
@@ -5,7 +7,7 @@ import {
   DEFAULT_TAB_COMPLETION_SYSTEM_PROMPT,
   DEFAULT_TAB_COMPLETION_TRIGGERS,
 } from './setting.types'
-import { parseYoloSettings } from './settings'
+import { migrateYoloSettingsData, parseYoloSettings } from './settings'
 
 describe('parseYoloSettings', () => {
   it('should return default values for empty input', () => {
@@ -24,7 +26,8 @@ describe('parseYoloSettings', () => {
     expect(result.systemPrompt).toBe('')
     expect(result.softDismissedUpdateVersion).toBe('')
     expect(result.mutedUpdateVersion).toBe('')
-
+    expect(result.mutedModuleUpdateVersions).toEqual({})
+    expect(result.pluginUpdateAutoDownloadEnabled).toBe(true)
     expect(result.ragOptions).toMatchObject({
       enabled: true,
       chunkSize: 1000,
@@ -48,7 +51,6 @@ describe('parseYoloSettings', () => {
       chatInputHeight: undefined,
       chatApplyMode: 'review-required',
       chatMode: 'agent',
-      agentModeWarningConfirmed: false,
       reasoningLevelByModelId: {},
       chatExportIncludeThinking: false,
       chatExportIncludeToolCalls: false,
@@ -78,6 +80,77 @@ describe('parseYoloSettings', () => {
     expect(result.continuationOptions.smartSpaceQuickActions).toBeUndefined()
 
     expect(result.assistants).toEqual([])
+  })
+
+  it('defaults local MCP server settings without a schema migration', () => {
+    const result = parseYoloSettings({
+      version: SETTINGS_SCHEMA_VERSION,
+      mcp: {
+        servers: [],
+        builtinToolOptions: {},
+        enableToolDisclosure: false,
+      },
+    })
+
+    expect(result.version).toBe(SETTINGS_SCHEMA_VERSION)
+    expect(result.mcp.localServer).toEqual({
+      enabled: false,
+      port: DEFAULT_LOCAL_MCP_SERVER_PORT,
+      token: '',
+    })
+  })
+
+  it('migrates released voice v70 data without replaying colliding history', () => {
+    const result = migrateYoloSettingsData({
+      version: 70,
+      browser: {
+        injectActivePageContext: true,
+      },
+      assistants: [
+        {
+          id: 'voice-user',
+          toolPreferences: {
+            yolo_local__browser_read_page: {
+              enabled: true,
+              approvalMode: 'require_approval',
+            },
+          },
+        },
+      ],
+      contextVoiceInputOptions: {
+        enabled: true,
+        asrConfigs: [{ id: 'asr-1', name: 'Existing ASR' }],
+        activeAsrConfigId: 'asr-1',
+      },
+    })
+
+    expect(result.version).toBe(SETTINGS_SCHEMA_VERSION)
+    expect(result.browser).toEqual({
+      injectActivePageContext: true,
+    })
+    expect(result.pluginUpdateAutoDownloadEnabled).toBe(true)
+    expect(result.ragOptions).toMatchObject({ excludeYoloBaseDir: true })
+    expect(result.contextVoiceInputOptions).toMatchObject({
+      enabled: true,
+      asrConfigs: [{ id: 'asr-1', name: 'Existing ASR' }],
+      activeAsrConfigId: 'asr-1',
+    })
+    const assistants = result.assistants as Array<Record<string, unknown>>
+    expect(assistants[0].toolPreferences).toEqual({
+      yolo_local__browser_read_page: {
+        enabled: true,
+        approvalMode: 'require_approval',
+      },
+    })
+  })
+
+  it('preserves a legacy hidden YOLO root for the startup filesystem migration', () => {
+    expect(
+      parseYoloSettings({
+        version: SETTINGS_SCHEMA_VERSION,
+        yolo: { baseDir: '.yolo' },
+      }).yolo.baseDir,
+    ).toBe('.yolo')
   })
 
   it('migrates applyModelId to chatTitleModelId for legacy settings', () => {
@@ -209,7 +282,7 @@ describe('parseYoloSettings', () => {
     ).toBe('openai/gpt-5')
   })
 
-  it('migrates version 41 settings to include qwen oauth defaults', () => {
+  it('does not add retired qwen oauth defaults to version 41 settings', () => {
     const result = parseYoloSettings({
       version: 41,
       providers: [
@@ -229,22 +302,65 @@ describe('parseYoloSettings', () => {
       ],
     })
 
-    expect(result.providers).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
+    expect(
+      result.providers.some((provider) => provider.id === 'qwen-oauth'),
+    ).toBe(false)
+    expect(
+      result.chatModels.some((model) => model.providerId === 'qwen-oauth'),
+    ).toBe(false)
+  })
+
+  it('preserves existing qwen oauth settings as a custom provider', () => {
+    const result = parseYoloSettings({
+      version: SETTINGS_SCHEMA_VERSION,
+      providers: [
+        {
           id: 'qwen-oauth',
           presetType: 'qwen-oauth',
-        }),
-      ]),
-    )
-    expect(result.chatModels).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
+          apiType: 'openai-compatible',
+          baseUrl: 'https://example.com/v1',
+          apiKey: 'existing-token',
+          additionalSettings: { requestTransportMode: { desktop: 'node' } },
+          customHeaders: [{ key: 'X-Test', value: 'preserved' }],
+        },
+      ],
+      chatModels: [
+        {
           id: 'qwen-oauth/coder-model',
           providerId: 'qwen-oauth',
-        }),
-      ]),
-    )
+          model: 'coder-model',
+          name: 'Existing Qwen model',
+          enable: false,
+          temperature: 0.4,
+        },
+      ],
+      chatModelId: 'qwen-oauth/coder-model',
+      chatTitleModelId: 'qwen-oauth/coder-model',
+    })
+
+    expect(result.providers).toEqual([
+      {
+        id: 'qwen-oauth',
+        presetType: 'openai-compatible',
+        apiType: 'openai-compatible',
+        baseUrl: 'https://example.com/v1',
+        apiKey: 'existing-token',
+        additionalSettings: { requestTransportMode: { desktop: 'node' } },
+        customHeaders: [{ key: 'X-Test', value: 'preserved' }],
+      },
+    ])
+    expect(result.chatModels).toEqual([
+      expect.objectContaining({
+        id: 'qwen-oauth/coder-model',
+        providerId: 'qwen-oauth',
+        model: 'coder-model',
+        name: 'Existing Qwen model',
+        enable: false,
+        temperature: 0.4,
+      }),
+    ])
+    expect(result.chatModelId).toBe('qwen-oauth/coder-model')
+    expect(result.chatTitleModelId).toBe('qwen-oauth/coder-model')
   })
 
   it('migrates legacy rag auto update interval 24 hours to 0', () => {
@@ -378,6 +494,10 @@ describe('parseYoloSettings', () => {
         continuationModelId: 'missing/model',
         tabCompletionModelId: 'missing/model',
       },
+      contextVoiceInputOptions: {
+        polishModelId: 'missing/model',
+      },
+      learningOptions: { modelId: 'missing/model' },
       assistants: [
         {
           id: 'assistant-1',
@@ -403,6 +523,8 @@ describe('parseYoloSettings', () => {
     expect(result.embeddingModelId).toBe('')
     expect(result.continuationOptions.continuationModelId).toBe('openai/gpt-5')
     expect(result.continuationOptions.tabCompletionModelId).toBe('openai/gpt-5')
+    expect(result.contextVoiceInputOptions.polishModelId).toBe('')
+    expect(result.learningOptions).toEqual({ modelId: 'missing/model' })
     expect(result.assistants).toEqual([
       {
         id: 'assistant-1',
@@ -413,6 +535,20 @@ describe('parseYoloSettings', () => {
     ])
     expect(result.currentAssistantId).toBeUndefined()
     expect(result.quickAskAssistantId).toBeUndefined()
+  })
+
+  it('preserves legacy learning settings as an opaque handoff payload', () => {
+    const learningOptions = {
+      modelId: 'openai/disabled',
+      betaNoticeAcknowledged: true,
+      futureField: { enabled: true },
+    }
+    expect(
+      parseYoloSettings({
+        version: SETTINGS_SCHEMA_VERSION,
+        learningOptions,
+      }).learningOptions,
+    ).toEqual(learningOptions)
   })
 
   it('clears invalid model references when no valid models remain after parsing', () => {
@@ -448,6 +584,7 @@ describe('parseYoloSettings', () => {
         continuationModelId: 'broken/model',
         tabCompletionModelId: 'broken/model',
       },
+      learningOptions: { modelId: 'broken/model' },
     })
 
     expect(result.chatModels).toEqual([])
@@ -457,6 +594,7 @@ describe('parseYoloSettings', () => {
     expect(result.embeddingModelId).toBe('')
     expect(result.continuationOptions.continuationModelId).toBe('')
     expect(result.continuationOptions.tabCompletionModelId).toBe('')
+    expect(result.learningOptions).toEqual({ modelId: 'broken/model' })
   })
 
   it('deduplicates embedding models with the same provider and model', () => {

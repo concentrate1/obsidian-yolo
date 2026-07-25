@@ -1,16 +1,27 @@
-import { en } from './locales/en'
-import { it } from './locales/it'
-import { zh } from './locales/zh'
-import { Language, TranslationKeys } from './types'
+import type { DeepPartial, Language, TranslationKeys } from './types'
 
-const translations: Record<Language, TranslationKeys> = {
-  en,
-  zh,
-  it,
+const translations: Partial<Record<Language, DeepPartial<TranslationKeys>>> = {}
+
+export async function loadLocale(language: Language): Promise<void> {
+  if (translations[language]) {
+    return
+  }
+
+  if (language === 'zh') {
+    translations.zh = (await import('./locales/zh')).zh
+    return
+  }
+  if (language === 'it') {
+    translations.it = (await import('./locales/it')).it
+    return
+  }
+  translations.en = (await import('./locales/en')).en
 }
 
-export function getTranslation(language: Language): TranslationKeys {
-  return translations[language] || translations.en
+export function getTranslation(
+  language: Language,
+): DeepPartial<TranslationKeys> | null {
+  return translations[language] ?? translations.en ?? null
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -18,7 +29,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function getNestedString(
-  source: TranslationKeys,
+  source: DeepPartial<TranslationKeys> | null,
   path: string[],
 ): string | undefined {
   let current: unknown = source
@@ -43,6 +54,3 @@ export function createTranslationFunction(language: Language) {
 }
 
 export type { Language, TranslationKeys } from './types'
-export { en } from './locales/en'
-export { zh } from './locales/zh'
-export { it } from './locales/it'

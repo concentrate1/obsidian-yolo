@@ -1,9 +1,9 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} **/
 module.exports = {
-  roots: ['<rootDir>/src'],
+  roots: ['<rootDir>/src', '<rootDir>/modules'],
   testEnvironment: 'node',
   transform: {
-    '^.+.tsx?$': ['ts-jest', {}],
+    '^.+.tsx?$': ['ts-jest', { isolatedModules: true }],
   },
   testPathIgnorePatterns: ['<rootDir>/Reference/', '<rootDir>/.opencode/'],
   modulePathIgnorePatterns: ['<rootDir>/Reference/', '<rootDir>/.opencode/'],

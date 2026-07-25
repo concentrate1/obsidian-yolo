@@ -159,7 +159,11 @@ const context = await esbuild.context({
   loader: {
     '.svg': 'dataurl',
   },
-  plugins: [pgliteShimPlugin, inlinePgliteWorkerPlugin, inlinePdfjsWorkerPlugin],
+  plugins: [
+    pgliteShimPlugin,
+    inlinePgliteWorkerPlugin,
+    inlinePdfjsWorkerPlugin,
+  ],
 })
 
 if (prod) {

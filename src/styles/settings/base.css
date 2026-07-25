@@ -125,6 +125,69 @@
   line-height: 1;
 }
 
+.yolo-settings-field.is-invalid .yolo-settings-card.setting-item {
+  margin-bottom: 0;
+  border-color: color-mix(
+    in srgb,
+    var(--text-error) 24%,
+    transparent
+  ) !important;
+  border-radius: var(--radius-m) var(--radius-m) 0 0;
+}
+
+.yolo-settings-field.is-invalid .yolo-settings-card input {
+  border-color: color-mix(in srgb, var(--text-error) 42%, transparent);
+}
+
+.yolo-settings-inline-error {
+  margin-bottom: var(--size-4-3);
+  padding: 10px var(--size-4-3);
+  border: 1px solid color-mix(in srgb, var(--text-error) 24%, transparent);
+  border-top: 0;
+  border-radius: 0 0 var(--radius-m) var(--radius-m);
+  background: color-mix(
+    in srgb,
+    var(--text-error) 8%,
+    var(--background-primary)
+  );
+  color: var(--text-error);
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-medium);
+  line-height: 1.35;
+}
+
+.yolo-settings-loading {
+  padding: var(--size-4-6) var(--size-4-4);
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+
+.yolo-module-settings-block:not(:first-child) {
+  margin-top: var(--size-4-8);
+}
+
+.yolo-module-settings-field.setting-item {
+  align-items: center;
+}
+
+select.yolo-module-settings-select,
+input.yolo-module-settings-text {
+  box-sizing: border-box;
+  min-width: 220px;
+  max-width: 100%;
+}
+
+select.yolo-module-settings-select {
+  appearance: auto;
+  font: inherit;
+}
+
+.yolo-module-settings-error {
+  margin-top: var(--size-4-2);
+  color: var(--text-error);
+  font-size: var(--font-ui-small);
+}
+
 /* Settings: Embedding DB Manage */
 
 .yolo-settings-embedding-db-manage-root {
@@ -514,11 +577,6 @@
   opacity: 0;
   transform: translateY(-4px);
   border-left: 1px solid transparent;
-  transition:
-    opacity 180ms ease,
-    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    padding 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 180ms ease;
 }
 
 .yolo-assistant-message-metadata-content .markdown-rendered {
@@ -547,7 +605,6 @@
   display: grid;
   grid-template-rows: 0fr;
   overflow: hidden;
-  transition: grid-template-rows 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .yolo-assistant-message-metadata-preview {

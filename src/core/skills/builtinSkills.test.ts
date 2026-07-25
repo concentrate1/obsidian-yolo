@@ -28,4 +28,28 @@ describe('builtin skills', () => {
     expect(outputFormat).not.toBeUndefined()
     expect(outputFormat?.content).toContain('<yolo_block>')
   })
+
+  it('renders the snippet skill content and description with its current path', () => {
+    const builtin = getBuiltinLiteSkillByName({
+      name: 'snippet-creator',
+      snippetsPath: 'Config/YOLO/snippets.md',
+    })
+
+    expect(builtin?.description).toContain('Config/YOLO/snippets.md')
+    expect(builtin?.content).toContain('Config/YOLO/snippets.md')
+    expect(builtin?.description).not.toContain('`YOLO/snippets.md`')
+  })
+
+  it('exposes obsidian-cli as a lazy builtin skill', () => {
+    const builtin = getBuiltinLiteSkillByName({ name: 'obsidian-cli' })
+
+    expect(builtin).not.toBeNull()
+    expect(builtin?.mode).toBe('lazy')
+    expect(builtin?.content).toContain('obsidian-cli')
+    expect(builtin?.content).toContain('<resolved-cli> version')
+    expect(builtin?.content).toContain(
+      '/Applications/Obsidian.app/Contents/MacOS/obsidian',
+    )
+    expect(builtin?.content).toContain('terminal_command')
+  })
 })
