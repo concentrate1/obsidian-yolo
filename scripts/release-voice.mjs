@@ -18,11 +18,17 @@ function fail(message) {
   process.exit(1)
 }
 
+function needsWindowsShell(command) {
+  // npm is a .cmd shim on Windows, while sending Git through cmd would split
+  // commit messages containing spaces into unintended pathspec arguments.
+  return process.platform === 'win32' && command === 'npm'
+}
+
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: repoRoot,
     encoding: 'utf8',
-    shell: process.platform === 'win32',
+    shell: needsWindowsShell(command),
     stdio: options.capture ? 'pipe' : 'inherit',
   })
   if (result.status !== 0) {
@@ -98,7 +104,7 @@ function assertTagIsFree(version) {
     {
       cwd: repoRoot,
       encoding: 'utf8',
-      shell: process.platform === 'win32',
+      shell: false,
       stdio: 'pipe',
     },
   )
