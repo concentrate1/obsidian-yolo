@@ -109,7 +109,7 @@ test('all first-party modules share one tag workflow', async () => {
   assert.doesNotMatch(moduleSource, /module-catalog\.yml/)
 })
 
-test('distribution treats dispatch as a wake-up and reconciles full state', async () => {
+test('distribution stays disabled on the voice dev branch', async () => {
   const distributionSource = await readFile(
     path.resolve('.github/workflows/distribution-publish.yml'),
     'utf8',
@@ -119,7 +119,11 @@ test('distribution treats dispatch as a wake-up and reconciles full state', asyn
   })
   assert.equal(distributionWorkflow.concurrency.group, 'distribution-publish')
   assert.equal(distributionWorkflow.concurrency['cancel-in-progress'], false)
-  assert.ok(distributionWorkflow.on.schedule)
+  assert.equal(distributionWorkflow.on.schedule, undefined)
+  assert.equal(
+    distributionWorkflow.jobs.reconcile.if,
+    "github.ref_name != 'yolo-unofficial-dev'",
+  )
   assert.match(distributionSource, /args=\(reconcile\)/)
   assert.match(distributionSource, /scripts\/distribution\.mjs/)
   assert.match(distributionSource, /git status --porcelain -- distribution/)

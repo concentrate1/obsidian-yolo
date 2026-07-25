@@ -7,8 +7,6 @@ on:
         description: Published Release id that woke this reconcile
         required: false
         type: string
-  schedule:
-    - cron: '17 * * * *'
 
 permissions:
   contents: write
@@ -19,6 +17,9 @@ concurrency:
 
 jobs:
   reconcile:
+    # This fork's dev branch publishes voice-only builds and has no signed
+    # distribution to reconcile. Keep the workflow available to other refs.
+    if: github.ref_name != 'yolo-unofficial-dev'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
