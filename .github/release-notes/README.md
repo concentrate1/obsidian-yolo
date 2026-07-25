@@ -8,6 +8,13 @@
 2. 根据本次同步的功能、修复和文档变化更新条目，不能沿用上一版内容。
 3. 再执行版本 bump、tag 和 push。
 4. 发布完成后，用 `gh release view <version> --repo concentrate1/obsidian-yolo --json body,url` 或网页确认远端 Release 正文。
+5. GitHub Actions 成功后，运行 `npm run release:voice:sync-artifacts -- <version>`，把 CI 实际生成并上传的 `main.js`、`manifest.json`、`styles.css` 校验后同步回仓库根目录。
+
+同步脚本会先检查 Release 与资产状态、文件大小、GitHub 提供的 SHA-256、manifest 版本和 styles 构建标记；只有三件套全部通过后才替换本地生成产物。不传版本时默认使用当前 `manifest.json` 的版本：
+
+```powershell
+npm run release:voice:sync-artifacts
+```
 
 如果发布后才发现正文落后，补救流程是先提交 `voice-build.md` 修正，再运行：
 
