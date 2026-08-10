@@ -119,7 +119,7 @@ test('distribution stays disabled on the voice dev branch', async () => {
   })
   assert.equal(distributionWorkflow.concurrency.group, 'distribution-publish')
   assert.equal(distributionWorkflow.concurrency['cancel-in-progress'], false)
-  assert.equal(distributionWorkflow.on.schedule, undefined)
+  assert.deepEqual(Object.keys(distributionWorkflow.on), ['workflow_dispatch'])
   assert.equal(
     distributionWorkflow.jobs.reconcile.if,
     "github.ref_name != 'yolo-unofficial-dev'",
@@ -133,4 +133,38 @@ test('distribution stays disabled on the voice dev branch', async () => {
     /node scripts\/distribution\.mjs reconcile\s+npx jest src\/core\/distribution\/generatedDistribution\.test\.ts --runInBand/,
   )
   assert.doesNotMatch(distributionSource, /force.push|--force/)
+})
+
+test('distribution keeps Pages best-effort and outside the release gate', async () => {
+  const distributionSource = await readFile(
+    path.resolve('.github/workflows/distribution-publish.yml'),
+    'utf8',
+  )
+  const distributionWorkflow = yaml.load(distributionSource, {
+    schema: yaml.JSON_SCHEMA,
+  })
+  const steps = distributionWorkflow.jobs.reconcile.steps
+  const check = steps.find(
+    ({ name }) => name === 'Check current Pages deployment',
+  )
+  const buildPages = steps.find(
+    ({ name }) => name === 'Build latest-only Pages snapshot',
+  )
+  const deployPages = steps.find(
+    ({ name }) => name === 'Deploy Cloudflare Pages snapshot',
+  )
+  const verifyAfterDeploy = steps.find(
+    ({ name }) => name === 'Verify deployed revision and assets',
+  )
+
+  assert.equal(check['continue-on-error'], true)
+  assert.equal(buildPages['continue-on-error'], true)
+  assert.equal(deployPages['continue-on-error'], true)
+  assert.match(deployPages.if, /steps\.pages_build\.outcome == 'success'/)
+  assert.equal(verifyAfterDeploy, undefined)
+  assert.match(distributionSource, /verification deferred to a later reconcile/)
+  assert.doesNotMatch(
+    distributionSource,
+    /echo '- Cloudflare Pages mirror: verified'/,
+  )
 })

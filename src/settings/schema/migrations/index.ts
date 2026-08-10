@@ -74,11 +74,20 @@ import { migrateFrom73To74 } from './73_to_74'
 import { migrateFrom74To75 } from './74_to_75'
 import { migrateFrom75To76 } from './75_to_76'
 import { migrateFrom76To77 } from './76_to_77'
+import { migrateFrom77To78 } from './77_to_78'
+import { migrateFrom78To79 } from './78_to_79'
 import { migrateFrom7To8 } from './7_to_8'
 import { migrateFrom8To9 } from './8_to_9'
 import { migrateFrom9To10 } from './9_to_10'
 
-export const SETTINGS_SCHEMA_VERSION = 77
+/**
+ * This branch intentionally has no fork-only migration after upstream v79.
+ * Voice settings rely on schema defaults. If a future voice change genuinely
+ * needs a new migration, explain that need and obtain explicit user approval
+ * before adding the new highest version. Version-collision gaps are accepted;
+ * do not replay or backfill skipped upstream migrations.
+ */
+export const SETTINGS_SCHEMA_VERSION = 79
 
 export const SETTING_MIGRATIONS: SettingMigration[] = [
   {
@@ -465,5 +474,15 @@ export const SETTING_MIGRATIONS: SettingMigration[] = [
     fromVersion: 76,
     toVersion: 77,
     migrate: migrateFrom76To77,
+  },
+  {
+    fromVersion: 77,
+    toVersion: 78,
+    migrate: migrateFrom77To78,
+  },
+  {
+    fromVersion: 78,
+    toVersion: 79,
+    migrate: migrateFrom78To79,
   },
 ]
