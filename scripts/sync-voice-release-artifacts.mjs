@@ -108,7 +108,12 @@ async function verifyDownloadedArtifacts(stagingDir, tag, assets) {
   }
 
   const styles = await readFile(join(stagingDir, 'styles.css'), 'utf8')
-  if (!styles.startsWith(`/* @yolo-version: ${tag} */`)) {
+  // PostCSS may keep the banner on one line or expand the comment across lines.
+  // Validate the embedded version instead of depending on comment formatting.
+  const styleVersion = styles.match(
+    /^\/\*\s*@yolo-version:\s*([^\s*]+)\s*\*\//,
+  )?.[1]
+  if (styleVersion !== tag) {
     fail(`Downloaded styles.css does not contain the ${tag} build banner`)
   }
 }
